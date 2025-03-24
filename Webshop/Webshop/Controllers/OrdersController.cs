@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Webshop.DTOs;
 using Webshop.Entities;
 using Webshop.Interfaces;
-using Webshop.Repositories;
 
 namespace Webshop.Controllers;
 
@@ -14,10 +13,11 @@ public class OrdersController : ControllerBase
     private readonly IOrderRepository _orderRepository;
     private readonly IOrderItemRepository _orderItemRepository;
     private readonly ICustomerRepository _customerRepository;
+    private readonly IProductRepository _productRepository;
     private readonly IMapper _mapper;
 
     public OrdersController(IOrderRepository orderRepository, IOrderItemRepository orderItemRepository, 
-        ICustomerRepository customerRepository, IMapper mapper)
+        ICustomerRepository customerRepository, IProductRepository productRepository, IMapper mapper)
     {
         _orderRepository = orderRepository
             ?? throw new ArgumentNullException(nameof(orderRepository));
@@ -25,12 +25,13 @@ public class OrdersController : ControllerBase
             ?? throw new ArgumentNullException(nameof(orderItemRepository));
         _customerRepository = customerRepository
            ?? throw new ArgumentNullException(nameof(customerRepository));
+        _productRepository = productRepository
+           ?? throw new ArgumentNullException(nameof(productRepository));
         _mapper = mapper
             ?? throw new ArgumentNullException(nameof(mapper));
     }
 
 
-    // ORDER
     [HttpGet("{id}")]
     public async Task<ActionResult<OrderDto>> GetOrderById(int id)
     {
@@ -40,7 +41,6 @@ public class OrdersController : ControllerBase
             ? NotFound($"No order found with given ID: {id}, please try again.") 
             : Ok(_mapper.Map<OrderDto>(order));
     }
-
 
     [HttpGet("customer/{customerId}")]
     public async Task<ActionResult<IEnumerable<OrderDto>>> GetCustomerOrders(int customerId)
@@ -59,11 +59,9 @@ public class OrdersController : ControllerBase
             : Ok(_mapper.Map<IEnumerable<OrderDto>>(orders));
     }
 
-
     [HttpPost]
     public async Task<ActionResult<CreateOrderDto>> CreateOrder(CreateOrderDto newOrder)
     {
-
         if (newOrder.OrderItems == null || !newOrder.OrderItems.Any())
         {
             return BadRequest("Order must contain at least one item.");
@@ -85,20 +83,27 @@ public class OrdersController : ControllerBase
 
             var order = _mapper.Map<Order>(newOrder);
 
-            // Skapa en ny order
             await _orderRepository.CreateOrderAsync(order);
 
-            // Mappa om orderItems från CreateOrderDto till OrderItem
+            // Sparar ordern så att den får ett ID innan vi lägger till OrderItems
+            await _orderRepository.SaveChangesAsync();
+
             var orderItems = _mapper.Map<IEnumerable<OrderItem>>(newOrder.OrderItems);
 
             foreach (var orderItem in orderItems)
-            {                
+            {
+                var productExists = await _productRepository.GetProductByIdAsync(orderItem.ProductId);
+
+                if (productExists is null)
+                {
+                    return BadRequest($"Product with ID {orderItem.ProductId} does not exist.");
+                }
+
                 orderItem.OrderId = order.Id; // Koppla orderItem till den nya ordern
-                await _orderItemRepository.AddOrderItemAsync(orderItem); // Lägg till orderItem i databasen
+               
+                await _orderItemRepository.AddOrderItemAsync(orderItem); 
             }
 
-            // Spara ändringarna i databasen
-            await _orderRepository.SaveChangesAsync();
             await _orderItemRepository.SaveChangesAsync(); 
 
             var orderDto = _mapper.Map<OrderDto>(order);
@@ -109,23 +114,6 @@ public class OrdersController : ControllerBase
         {
             return StatusCode(500, "An error occurred while processing your request.");
         }
-    }
-
-
-    // ORDERITEM
-    [HttpGet("orderitem/{orderId}")]
-    public async Task<ActionResult<IEnumerable<OrderItemDto>>> GetOrderItemsForOrder(int orderId)
-    {
-        var order = await _orderRepository.GetOrderById(orderId);
-
-        if (order is null)
-        {
-            return NotFound($"No order found with given ID: {orderId}, please try again.");
-        }
-
-        var orderItems = await _orderItemRepository.GetOrderItemsForOrder(orderId);
-
-        return Ok(_mapper.Map<IEnumerable<OrderItemDto>>(orderItems));
-    }
+    }    
 }
 

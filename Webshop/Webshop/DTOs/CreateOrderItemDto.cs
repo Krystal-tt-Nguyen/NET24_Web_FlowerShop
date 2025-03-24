@@ -1,9 +1,11 @@
-﻿namespace Webshop.DTOs;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Webshop.DTOs;
 
 public class CreateOrderItemDto
 {
-    public int OrderId { get; set; }
+    [Required(ErrorMessage = "Product ID is required.")]
     public int ProductId { get; set; }
+
     public int Quantity { get; set; }
-    public decimal UnitPrice { get; set; }
 }

@@ -79,6 +79,7 @@ public class ProductsController : ControllerBase
             var product = _mapper.Map<Product>(newProduct);
 
             await _productRepository.CreateProductAsync(product);
+
             await _productRepository.SaveChangesAsync();
 
             var productDto = _mapper.Map<ProductDto>(product);
@@ -118,13 +119,13 @@ public class ProductsController : ControllerBase
             _mapper.Map(updatedProduct, existingProduct);
 
             _productRepository.UpdateProduct(existingProduct);
+
             await _productRepository.SaveChangesAsync();
 
             return Ok(_mapper.Map<ProductDto>(existingProduct));
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Console.WriteLine(ex.ToString());
             return StatusCode(500, "An error occurred while processing your request.");
         }        
     }
@@ -140,6 +141,7 @@ public class ProductsController : ControllerBase
         }
 
         _productRepository.DeleteProduct(existingProduct);
+
         await _productRepository.SaveChangesAsync();
 
         return NoContent();

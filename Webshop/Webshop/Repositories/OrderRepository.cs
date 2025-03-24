@@ -14,14 +14,24 @@ public class OrderRepository : IOrderRepository
     }
 
     public async Task<Order?> GetOrderById(int id)
-        => await _context.Orders.FindAsync(id);    
+        => await _context.Orders
+                .Include(o => o.Customer)
+                .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Product)
+                .FirstOrDefaultAsync(o => o.Id == id);    
 
     public async Task<IEnumerable<Order>> GetOrdersByCustomerId(int customerId)
-        => await _context.Orders.Where(o => o.CustomerId == customerId).ToListAsync();
+        => await _context.Orders
+                .Include(o => o.Customer)
+                .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Product)
+                .Where(o => o.CustomerId == customerId)
+                .ToListAsync();
 
     public async Task CreateOrderAsync(Order order) 
         => await _context.Orders.AddAsync(order);
 
-    public async Task<bool> SaveChangesAsync() => await _context.SaveChangesAsync() >= 0;
+    public async Task<bool> SaveChangesAsync() 
+        => await _context.SaveChangesAsync() >= 0;
 }
 

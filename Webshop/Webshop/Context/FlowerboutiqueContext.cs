@@ -27,8 +27,7 @@ public partial class FlowerboutiqueContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        // Fallback metod om Db-context inte blivit korrekt konfigurerad i program.cs
-        // -> kommer att hämta DefaultConnection från appsettings
+        // Fallback metod om Db-context inte blivit korrekt konfigurerad i program.cs -> hämtar DefaultConnection från appsettings
         if (!optionsBuilder.IsConfigured)
         {
             var connectionString = _configuration.GetConnectionString("DefaultConnection");

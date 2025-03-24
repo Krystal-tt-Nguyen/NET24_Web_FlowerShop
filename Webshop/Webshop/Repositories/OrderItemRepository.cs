@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Webshop.DTOs;
 using Webshop.Entities;
 using Webshop.Interfaces;
 
@@ -13,10 +14,17 @@ public class OrderItemRepository : IOrderItemRepository
         _context = context ?? throw new ArgumentNullException(nameof(context));
     }
 
-    public async Task<IEnumerable<OrderItem>> GetOrderItemsForOrder(int orderId) 
-        => await _context.OrderItems.Include(o => o.Product).Where(o => o.OrderId == orderId).ToListAsync();
-    
-    public async Task AddOrderItemAsync(OrderItem orderItem) => await _context.OrderItems.AddAsync(orderItem);
-    
-    public async Task<bool> SaveChangesAsync() => await _context.SaveChangesAsync() >= 0;
+    public async Task AddOrderItemAsync(OrderItem orderItem)
+    {
+        var existingOrderItem = await _context.OrderItems
+            .FirstOrDefaultAsync(oi => oi.OrderId == orderItem.OrderId && oi.ProductId == orderItem.ProductId);
+
+        if (existingOrderItem is null)
+        {
+            _context.OrderItems.Add(orderItem);
+        }
+    }
+
+    public async Task<bool> SaveChangesAsync() 
+        => await _context.SaveChangesAsync() >= 0;
 }
