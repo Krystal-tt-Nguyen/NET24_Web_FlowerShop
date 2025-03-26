@@ -5,6 +5,7 @@ using Webshop;
 using Webshop.Components;
 using Webshop.Interfaces;
 using Webshop.Repositories;
+using Webshop.Services;
 
 // This code creates a WebbapplicationBuilder and is used to configure and build an ASP.NET Core application
 var builder = WebApplication.CreateBuilder(args);
@@ -28,12 +29,17 @@ builder.Services.AddDbContext<FlowerboutiqueContext>(options
     => options.UseSqlServer(connectionString));
 
 
+builder.Services.AddScoped<ICustomerService, CustomerService>();
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IOrderItemRepository, OrderItemRepository>();
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
 
 var app = builder.Build();
 

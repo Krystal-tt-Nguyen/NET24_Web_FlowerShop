@@ -30,5 +30,4 @@ public class CustomerRepository : ICustomerRepository
 
     public async Task<bool> SaveChangesAsync() 
         => await _context.SaveChangesAsync() >= 0;
-
 }

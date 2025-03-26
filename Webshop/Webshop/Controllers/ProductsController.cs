@@ -10,52 +10,53 @@ namespace Webshop.Controllers;
 [Route("api/products")]
 public class ProductsController : ControllerBase
 {
-    private readonly IProductRepository _productRepository;
-    private readonly IMapper _mapper;
+    private readonly IProductService _productService;
 
-    public ProductsController(IProductRepository productRepository, IMapper mapper)
+    public ProductsController(IProductService productService)
     {
-        _productRepository = productRepository
-            ?? throw new ArgumentNullException(nameof(productRepository));
-        _mapper = mapper
-            ?? throw new ArgumentNullException(nameof(mapper));
+        _productService = productService 
+            ?? throw new ArgumentNullException(nameof(productService));
     }
+
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ProductDto>>> GetProducts()
     {
-        var products = await _productRepository.GetProductsAsync();
-        return Ok(_mapper.Map<IEnumerable<ProductDto>>(products));
+        var products = await _productService.GetProductsAsync();
+        return Ok(products);
     }
+
 
     [HttpGet("{id}")]
     public async Task<ActionResult<ProductDto>> GetProductById(int id)
     {
-        var product = await _productRepository.GetProductByIdAsync(id);
+        var product = await _productService.GetProductByIdAsync(id);
 
         if (product is null) 
         {
             return NotFound($"No product found with given ID: {id}, please try again.");
         }
 
-        return Ok(_mapper.Map<ProductDto>(product));
+        return Ok(product);
     }
+
 
     [HttpGet("name/{name}")]
     public async Task<ActionResult<ProductDto>> GetProductByName(string name)
     {
-        var product = await _productRepository.GetProductByNameAsync(name);
+        var product = await _productService.GetProductByNameAsync(name);
 
         if (product is null)
         {
             return NotFound($"No product found with given productname: {name}, please try again.");
         }
 
-        return Ok(_mapper.Map<ProductDto>(product));
+        return Ok(product);
     }
 
+
     [HttpPost]
-    public async Task<ActionResult<CreateProductDto>> CreateProduct(CreateProductDto newProduct) 
+    public async Task<ActionResult<ProductDto>> CreateProduct(CreateProductDto newProduct) 
     {
         if (newProduct is null)
         {
@@ -67,34 +68,19 @@ public class ProductsController : ControllerBase
             return BadRequest(ModelState);
         }
 
-        try
+        var product = await _productService.CreateProductAsync(newProduct);
+
+        if (product is null)
         {
-            var existingProduct = await _productRepository.GetProductByProductNumberAsync(newProduct.ProductNumber);
-
-            if (existingProduct != null)
-            {
-                return Conflict("Cannot add product: An identical product is already registered.");
-            }
-
-            var product = _mapper.Map<Product>(newProduct);
-
-            await _productRepository.CreateProductAsync(product);
-
-            await _productRepository.SaveChangesAsync();
-
-            var productDto = _mapper.Map<ProductDto>(product);
-
-            return CreatedAtAction(nameof(GetProductById), new { id = product.Id }, productDto);
+            return Conflict("Cannot add product: An identical product is already registered.");
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.ToString());
-            return StatusCode(500, "An error occurred while processing your request.");
-        }
+
+        return CreatedAtAction(nameof(GetProductById), new { id = product.Id }, product);
     }
 
+
     [HttpPut("{id}")]
-    public async Task<ActionResult<UpdateProductDto>> UpdateProduct(int id, UpdateProductDto updatedProduct)
+    public async Task<ActionResult<ProductDto>> UpdateProduct(int id, UpdateProductDto updatedProduct)
     {
         if (updatedProduct is null)
         {
@@ -106,43 +92,26 @@ public class ProductsController : ControllerBase
             return BadRequest(ModelState);
         }
 
-        try
-        {
-            var existingProduct = await _productRepository.GetProductByIdAsync(id);
+        var product = await _productService.UpdateProductAsync(id, updatedProduct);
 
-            if (existingProduct is null)
-            {
-                return NotFound($"No product found with given ID: {id}, please try again.");
-            }
-
-            // _mapper.Map(source, destination);
-            _mapper.Map(updatedProduct, existingProduct);
-
-            _productRepository.UpdateProduct(existingProduct);
-
-            await _productRepository.SaveChangesAsync();
-
-            return Ok(_mapper.Map<ProductDto>(existingProduct));
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, "An error occurred while processing your request.");
-        }        
-    }
-
-    [HttpDelete("{id}")]
-    public async Task<ActionResult> DeleteProduct(int id)
-    {
-        var existingProduct = await _productRepository.GetProductByIdAsync(id);
-
-        if (existingProduct is null)
+        if (product is null)
         {
             return NotFound($"No product found with given ID: {id}, please try again.");
         }
 
-        _productRepository.DeleteProduct(existingProduct);
+        return Ok(product); 
+    }
 
-        await _productRepository.SaveChangesAsync();
+
+    [HttpDelete("{id}")]
+    public async Task<ActionResult> DeleteProduct(int id)
+    {
+        var result = await _productService.DeleteProductAsync(id);
+
+        if (!result)
+        {
+            return NotFound($"No product found with given ID: {id}, please try again.");
+        }
 
         return NoContent();
     }
