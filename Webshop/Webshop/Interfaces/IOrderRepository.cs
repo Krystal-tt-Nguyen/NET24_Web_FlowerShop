@@ -1,5 +1,4 @@
-﻿using Webshop.Components;
-using Webshop.Entities;
+﻿using Webshop.Entities;
 
 namespace Webshop.Interfaces;
 

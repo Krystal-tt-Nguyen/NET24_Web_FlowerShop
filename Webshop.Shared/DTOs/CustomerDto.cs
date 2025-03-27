@@ -1,4 +1,4 @@
-﻿namespace Webshop.DTOs;
+﻿namespace Webshop.Shared.DTOs;
 
 public class CustomerDto
 {

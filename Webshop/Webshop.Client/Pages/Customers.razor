@@ -1,0 +1,73 @@
+﻿@page "/customers"
+@inject HttpClient httpClient
+@using Webshop.Shared.DTOs;
+
+<h3>Customers</h3>
+
+@if (_customers != null && _customers.Any())
+{
+    <MudTable Items="@_customers" Hover="true">
+        <HeaderContent>
+            <MudTh>First Name</MudTh>
+            <MudTh>Last Name</MudTh>
+            <MudTh>Email</MudTh>
+            <MudTh>Phone Number</MudTh>
+            <MudTh>Street Address</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.FirstName</MudTd>
+            <MudTd>@context.LastName</MudTd>
+            <MudTd>@context.Email</MudTd>
+            <MudTd>@context.PhoneNumber</MudTd>
+            <MudTd>@context.StreetAddress</MudTd>
+            <MudTd>
+                <MudButton OnClick="() => EditCustomer(context)" Color="Color.Primary">Edit</MudButton>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+else
+{
+    <p>No customers found or loading...</p>
+}
+
+<MudButton OnClick="CreateCustomer" Color="Color.Primary">Add Customer</MudButton>
+
+@code {
+
+    private List<CustomerDto> _customers = new List<CustomerDto>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var customers = await httpClient.GetFromJsonAsync<List<CustomerDto>>("api/customers");
+
+            if (customers == null)
+            {
+                Console.Error.WriteLine("No customers returned from the API.");
+            }
+            else
+            {
+                _customers = customers;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"An error occurred while fetching customers: {ex.Message}");
+        }
+    }
+
+    private void CreateCustomer()
+    {
+        // Här kan du använda CreateCustomerDto för att skapa en ny kund
+        // Till exempel, navigera till en ny sida för att skapa en kund
+        // eller öppna en modal dialog för att skapa kunden
+    }
+
+    private void EditCustomer(CustomerDto customer)
+    {
+        // Här kan du använda CustomerDto för att redigera en kund
+        // Till exempel, navigera till en ny sida för att redigera kunden
+    }
+}

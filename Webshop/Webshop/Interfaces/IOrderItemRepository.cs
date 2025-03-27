@@ -1,5 +1,4 @@
-﻿using Webshop.DTOs;
-using Webshop.Entities;
+﻿using Webshop.Entities;
 
 namespace Webshop.Interfaces;
 

@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System.Threading.Tasks;
 using Webshop.Entities;
 using Webshop.Interfaces;
 

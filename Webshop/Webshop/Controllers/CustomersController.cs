@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Webshop.DTOs;
 using Webshop.Interfaces;
-using Webshop.Services;
+using Webshop.Shared.DTOs;
 
 namespace Webshop.Controllers;
 

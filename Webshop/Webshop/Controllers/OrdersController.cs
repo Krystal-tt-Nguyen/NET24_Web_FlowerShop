@@ -1,8 +1,6 @@
-﻿using AutoMapper;
-using Microsoft.AspNetCore.Mvc;
-using Webshop.DTOs;
-using Webshop.Entities;
+﻿using Microsoft.AspNetCore.Mvc;
 using Webshop.Interfaces;
+using Webshop.Shared.DTOs;
 
 namespace Webshop.Controllers;
 

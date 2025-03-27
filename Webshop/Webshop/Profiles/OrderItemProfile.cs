@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using Webshop.DTOs;
+using Webshop.Shared.DTOs;
 using Webshop.Entities;
 
 namespace Webshop.Profiles;

@@ -1,7 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Razor.TagHelpers;
-using Microsoft.EntityFrameworkCore;
-using System.Threading.Tasks;
+﻿using Microsoft.EntityFrameworkCore;
 using Webshop.Entities;
 using Webshop.Interfaces;
 

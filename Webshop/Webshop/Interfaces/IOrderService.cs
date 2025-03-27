@@ -1,4 +1,4 @@
-﻿using Webshop.DTOs;
+﻿using Webshop.Shared.DTOs;
 
 namespace Webshop.Interfaces
 {

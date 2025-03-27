@@ -16,6 +16,8 @@ builder.Services.AddMudServices();
 builder.Services.AddRazorComponents()
     .AddInteractiveWebAssemblyComponents();
 
+builder.Services.AddHttpClient();
+
 builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();

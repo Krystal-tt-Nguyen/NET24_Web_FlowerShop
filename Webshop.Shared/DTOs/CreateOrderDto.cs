@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Webshop.DTOs;
+namespace Webshop.Shared.DTOs;
 
 public class CreateOrderDto
 {
@@ -11,5 +11,5 @@ public class CreateOrderDto
     public DateTime OrderDate { get; set; }    
 
     [Required(ErrorMessage = "At least one order item is required.")]
-    public IEnumerable<CreateOrderItemDto> OrderItems { get; set; } = new List<CreateOrderItemDto>();
+    public List<CreateOrderItemDto> OrderItems { get; set; } = new List<CreateOrderItemDto>();
 }

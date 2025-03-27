@@ -1,8 +1,7 @@
 ﻿using AutoMapper;
-using static Webshop.Services.OrderService;
-using Webshop.DTOs;
 using Webshop.Entities;
 using Webshop.Interfaces;
+using Webshop.Shared.DTOs;
 
 namespace Webshop.Services;
 
