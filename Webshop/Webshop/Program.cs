@@ -16,7 +16,12 @@ builder.Services.AddMudServices();
 builder.Services.AddRazorComponents()
     .AddInteractiveWebAssemblyComponents();
 
-builder.Services.AddHttpClient();
+//builder.Services.AddHttpClient();
+//Add Http Client so that FE can call API on server side
+builder.Services.AddHttpClient("api", client =>
+{
+    client.BaseAddress = new Uri("https://localhost:7070/");
+});
 
 builder.Services.AddControllers();
 

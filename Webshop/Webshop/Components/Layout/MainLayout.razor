@@ -3,7 +3,7 @@
 <MudThemeProvider Theme="@_theme" IsDarkMode="_isDarkMode" />
 <MudLayout>
     <MudAppBar Elevation="1">
-        <MudText Typo="Typo.h5" Class="ml-3">Application</MudText>
+        <MudText Typo="Typo.h5" Class="ml-3">Kristello's Flower Shop</MudText>
     </MudAppBar>
     <MudDrawer id="nav-drawer" @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
         <NavMenu />
@@ -22,7 +22,7 @@
 
 @code {
     private bool _drawerOpen = true;
-    private bool _isDarkMode = true;
+    private bool _isDarkMode = false;
     private MudTheme? _theme = null;
 
     protected override void OnInitialized()
@@ -49,12 +49,19 @@
 
     private readonly PaletteLight _lightPalette = new()
     {
-        Black = "#110e2d",
-        AppbarText = "#424242",
-        AppbarBackground = "rgba(255,255,255,0.8)",
-        DrawerBackground = "#ffffff",
-        GrayLight = "#e8e8e8",
-        GrayLighter = "#f9f9f9",
+        // Black = "#110e2d",
+        // AppbarText = "#424242",
+        // AppbarBackground = "rgba(255,255,255,0.8)",
+        // DrawerBackground = "#ffffff",
+        // GrayLight = "#e8e8e8",
+        // GrayLighter = "#f9f9f9",
+
+        Black = "#B8D8B4",
+        AppbarText = "#4F4F4F", 
+        AppbarBackground = "rgba(204, 213, 174, 0.3)", 
+        DrawerBackground = "rgba(204, 213, 174, 0.3)", 
+        GrayLight = "#D1E8D1", 
+        GrayLighter = "#F1F9F1",
     };
 
     private readonly PaletteDark _darkPalette = new()

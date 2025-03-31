@@ -1,73 +1,353 @@
-﻿@page "/customers"
-@inject HttpClient httpClient
+﻿@page "/customer"
+@inject HttpClient _httpClient
+@inject NavigationManager Navigation
+@rendermode InteractiveWebAssembly
+
+@using System.Net;
 @using Webshop.Shared.DTOs;
 
-<h3>Customers</h3>
 
-@if (_customers != null && _customers.Any())
+@if (_isLoading)
 {
-    <MudTable Items="@_customers" Hover="true">
-        <HeaderContent>
-            <MudTh>First Name</MudTh>
-            <MudTh>Last Name</MudTh>
-            <MudTh>Email</MudTh>
-            <MudTh>Phone Number</MudTh>
-            <MudTh>Street Address</MudTh>
-        </HeaderContent>
-        <RowTemplate>
-            <MudTd>@context.FirstName</MudTd>
-            <MudTd>@context.LastName</MudTd>
-            <MudTd>@context.Email</MudTd>
-            <MudTd>@context.PhoneNumber</MudTd>
-            <MudTd>@context.StreetAddress</MudTd>
-            <MudTd>
-                <MudButton OnClick="() => EditCustomer(context)" Color="Color.Primary">Edit</MudButton>
-            </MudTd>
-        </RowTemplate>
-    </MudTable>
+    <MudProgressCircular Color="Color.Default" Indeterminate="true" />
+    <MudText Class="mt-5" Typo="Typo.body1">Loading page ...</MudText>
 }
 else
 {
-    <p>No customers found or loading...</p>
+    @if (_showCustomersList)
+    {
+        <MudPaper Class="pa-4">
+            <MudText Class="mb-5" Typo="Typo.h4">Customer Management</MudText>
+
+            <MudTextField Class="mb-5" @bind-Value="_emailSearch" Label="Search by email" Adornment="Adornment.Start" Icon="@Icons.Material.Filled.Search"></MudTextField>
+
+            <div style="display: flex">
+                <MudButton Class="mb-5" Variant="Variant.Filled" Color="Color.Primary" OnClick="() => GetCustomerByEmail()">Search</MudButton>
+                <MudButton Class="mb-5" Variant="Variant.Outlined" Color="Color.Primary" OnClick="() => ClearEmailSearch()" style="margin-left: 10px;">Clear</MudButton>
+                <MudButton Class="mb-5" Variant="Variant.Filled" Color="Color.Secondary" OnClick="() => PrepareToAddCustomer()" style="margin-left: auto;">Add Customer</MudButton>
+            </div>
+    
+            @if (!string.IsNullOrEmpty(_errorMessage))
+            {
+                <MudText Class="mb-5" Typo="Typo.body1" Style="@($"color:{Colors.Red.Accent4};")">@_errorMessage</MudText>
+            }
+            else if (!string.IsNullOrEmpty(_successMessage))
+            {
+                <MudText Class="mb-5" Typo="Typo.body1" Style="@($"color:{Colors.Green.Accent4};")">@_successMessage</MudText>
+            }
+
+            @if (_customers != null && _customers.Any())
+            {
+                <MudTable Items="@_customers" Hover="true">
+                    <HeaderContent>
+                        <MudTh>ID</MudTh>
+                        <MudTh>First Name</MudTh>
+                        <MudTh>Last Name</MudTh>
+                        <MudTh>Email</MudTh>
+                        <MudTh>Phone Number</MudTh>
+                        <MudTh>Street Address</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@context.Id</MudTd>
+                        <MudTd>@context.FirstName</MudTd>
+                        <MudTd>@context.LastName</MudTd>
+                        <MudTd>@context.Email</MudTd>
+                        <MudTd>@context.PhoneNumber</MudTd>
+                        <MudTd>@context.StreetAddress</MudTd>
+                        <MudTd>
+                            <MudButton OnClick="() => PrepareToUpdateCustomer(context)" Color="Color.Primary">Edit</MudButton>
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            }
+        </MudPaper>
+    }
+
+    @if (_customerToUpdate != null)
+    {
+        <MudPaper Class="pa-4 mt-5">
+            <MudText Class="mb-5" Typo="Typo.h5">Edit Customer</MudText>
+
+            @if (!string.IsNullOrEmpty(_errorMessage))
+            {
+                <MudText Class="mb-5" Typo="Typo.body1" Style="@($"color:{Colors.Red.Accent4};")">@_errorMessage</MudText>
+            }
+            else if (!string.IsNullOrEmpty(_successMessage))
+            {
+                <MudText Class="mb-5" Typo="Typo.body1" Style="@($"color:{Colors.Green.Accent4};")">@_successMessage</MudText>
+            }
+
+            <MudTextField @bind-Value="_customerToUpdate.Id" Label="ID" Disabled=true Class="mb-3"></MudTextField>
+            <MudTextField @bind-Value="_customerToUpdate.FirstName" Label="First Name" Required="true" Class="mb-3"></MudTextField>
+            <MudTextField @bind-Value="_customerToUpdate.LastName" Label="Last Name" Required="true" Class="mb-3"></MudTextField>
+            <MudTextField @bind-Value="_customerToUpdate.Email" Label="Email" Required="true" Class="mb-3"></MudTextField>
+            <MudTextField @bind-Value="_customerToUpdate.PhoneNumber" Label="Phone Number" Required="true" Class="mb-3"></MudTextField>
+            <MudTextField @bind-Value="_customerToUpdate.StreetAddress" Label="Street Address" Required="true" Class="mb-3"></MudTextField>
+
+            <MudButton Class="mb-3" Variant="Variant.Filled" Color="Color.Primary" OnClick="() => UpdateCustomer()">Save</MudButton>
+            <MudButton Class="mb-3 ml-2" Variant="Variant.Outlined" Color="Color.Secondary" OnClick="CancelUpdateCustomer">Cancel</MudButton>
+        </MudPaper>
+    }
+
+    @if (_showAddCustomer)
+    {
+        <MudPaper Class="pa-4 mt-5">
+            <MudText Class="mb-5" Typo="Typo.h5">Add New Customer</MudText>
+
+            @if (!string.IsNullOrEmpty(_errorMessage))
+            {
+                <MudText Class="mb-5" Typo="Typo.body1" Style="@($"color:{Colors.Red.Accent4};")">@_errorMessage</MudText>
+            }
+            else if (!string.IsNullOrEmpty(_successMessage))
+            {
+                <MudText Class="mb-5" Typo="Typo.body1" Style="@($"color:{Colors.Green.Accent4};")">@_successMessage</MudText>
+            }
+
+            <MudTextField @bind-Value="_customerToAdd.FirstName" Label="First Name" Required="true" Class="mb-3"></MudTextField>
+            <MudTextField @bind-Value="_customerToAdd.LastName" Label="Last Name" Required="true" Class="mb-3"></MudTextField>
+            <MudTextField @bind-Value="_customerToAdd.Email" Label="Email" Required="true" Class="mb-3"></MudTextField>
+            <MudTextField @bind-Value="_customerToAdd.PhoneNumber" Label="Phone Number" Required="true" Class="mb-3"></MudTextField>
+            <MudTextField @bind-Value="_customerToAdd.StreetAddress" Label="Street Address" Required="true" Class="mb-3"></MudTextField>
+
+            <MudButton Class="mb-3" Variant="Variant.Filled" Color="Color.Primary" OnClick="() => AddCustomer()">Add</MudButton>
+            <MudButton Class="mb-3 ml-2" Variant="Variant.Outlined" Color="Color.Secondary" OnClick="CancelAddCustomer">Cancel</MudButton>
+        </MudPaper>
+    }
 }
 
-<MudButton OnClick="CreateCustomer" Color="Color.Primary">Add Customer</MudButton>
+
+
 
 @code {
+    private string? _emailSearch;
+    private string? _errorMessage;
+    private string? _successMessage;
+
+    private bool _isLoading = true;
+    private bool _showCustomersList = true;
+    private bool _showAddCustomer = false;
 
     private List<CustomerDto> _customers = new List<CustomerDto>();
+    private CustomerDto _customerToAdd = new CustomerDto();
+    private CustomerDto? _customerToUpdate;
+
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadCustomers();
+    }
+
+    private async Task LoadCustomers()
+    {
         try
         {
-            var customers = await httpClient.GetFromJsonAsync<List<CustomerDto>>("api/customers");
+            _customers = await _httpClient.GetFromJsonAsync<List<CustomerDto>>("api/customers");
+            _isLoading = false;
+            _showCustomersList = true;
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"An error occurred while fetching customers: {ex.Message}";
+        }        
+    }
 
-            if (customers == null)
+    private async Task GetCustomerByEmail()
+    {
+        _errorMessage = null;
+        _successMessage = null;
+        _customers.Clear();
+
+        try
+        {
+            if (string.IsNullOrWhiteSpace(_emailSearch))
             {
-                Console.Error.WriteLine("No customers returned from the API.");
+                await LoadCustomers();
             }
             else
             {
-                _customers = customers;
+                // CustomersController returnerar statuskod och ev. en CustomerDto
+                var response = await _httpClient.GetAsync($"api/customers/email/{_emailSearch}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var customer = await response.Content.ReadFromJsonAsync<CustomerDto>();
+
+                    if (customer != null)
+                    {
+                        _customers.Add(customer);
+                    }                    
+                }
+                else if (response.StatusCode == HttpStatusCode.NotFound)
+                {
+                    _errorMessage = "No customer found with given email";
+                }
             }
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"An error occurred while fetching customers: {ex.Message}");
+            _errorMessage = "An error occurred while searching for the customer.";
+
+            Console.Error.WriteLine($"An error occurred: {ex.Message}");
         }
     }
 
-    private void CreateCustomer()
+    private async Task ClearEmailSearch()
     {
-        // Här kan du använda CreateCustomerDto för att skapa en ny kund
-        // Till exempel, navigera till en ny sida för att skapa en kund
-        // eller öppna en modal dialog för att skapa kunden
+        _emailSearch = string.Empty;
+        _errorMessage = null;
+        _successMessage = null;
+
+        await LoadCustomers();
     }
 
-    private void EditCustomer(CustomerDto customer)
+    private void PrepareToAddCustomer()
     {
-        // Här kan du använda CustomerDto för att redigera en kund
-        // Till exempel, navigera till en ny sida för att redigera kunden
+        _showCustomersList = false;
+        _showAddCustomer = true;
+        _errorMessage = null;
+        _successMessage = null;
     }
+
+    private async Task AddCustomer()
+    {
+        if (_customerToAdd == null)
+        {
+            _errorMessage = "Please fill in all required fields.";
+            return;
+        }
+
+        try
+        {
+            var newCustomer = new CreateCustomerDto()
+            {
+                FirstName = _customerToAdd.FirstName,
+                LastName = _customerToAdd.LastName,
+                Email = _customerToAdd.Email,
+                PhoneNumber = _customerToAdd.PhoneNumber,
+                StreetAddress = _customerToAdd.StreetAddress
+            };
+
+            var response = await _httpClient.PostAsJsonAsync("api/customers", newCustomer);
+
+            if (response.IsSuccessStatusCode)
+            {
+                _successMessage = "Customer added successfully!";
+                _errorMessage = null;
+                _customerToAdd = new CustomerDto();
+                
+                _showAddCustomer = false;
+                _showCustomersList = true;
+
+                await LoadCustomers();
+            }
+            else
+            {
+                _errorMessage = "Failed to add customer.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"An error occurred: {ex.Message}";
+            _customerToAdd = new CustomerDto();
+        }
+    }
+
+    private async Task CancelAddCustomer()
+    {
+        // _customerToAdd = null => "Object reference not set to an instance of an object"
+        _customerToAdd = new CustomerDto();
+        _errorMessage = "Add new customer cancelled.";
+        _successMessage = null;
+
+        _showCustomersList = true;
+        _showAddCustomer = false;
+
+        await LoadCustomers();
+    }
+
+    private void PrepareToUpdateCustomer(CustomerDto customer)
+    {
+        // Client visar en CustomerDto, behöver kopieras till en CustomerUpdateDto innan den skickas till API:et
+        _customerToUpdate = new CustomerDto
+        {
+            Id = customer.Id,
+            FirstName = customer.FirstName,
+            LastName = customer.LastName,
+            Email = customer.Email,
+            PhoneNumber = customer.PhoneNumber,
+            StreetAddress = customer.StreetAddress
+        };
+
+        _showCustomersList = false;
+        _errorMessage = null;
+        _successMessage = null;
+    }
+
+    private async Task UpdateCustomer()
+    {
+        bool _isEmailAvailable = true;
+
+        if (_customerToUpdate == null)
+        {
+            _errorMessage = "No customer to update.";
+            return; 
+        }
+
+        try
+        {
+            var customerToUpdateDto = new UpdateCustomerDto
+            {
+                FirstName = _customerToUpdate.FirstName,
+                LastName = _customerToUpdate.LastName,
+                Email = _customerToUpdate.Email,
+                PhoneNumber = _customerToUpdate.PhoneNumber,
+                StreetAddress = _customerToUpdate.StreetAddress
+            };
+
+            foreach (var customer in _customers)
+            {
+                // Kolla ID då foreach loopar igenom alla email inkl. customerToUpdate
+                if (customer.Id != _customerToUpdate.Id && customer.Email == customerToUpdateDto.Email)
+                {
+                    _isEmailAvailable = false;
+                    _errorMessage = "The email address provided is already registered. Please use a different email address.";
+                    break;
+                }
+            }
+
+            if (_isEmailAvailable)
+            {
+                var response = await _httpClient.PutAsJsonAsync($"api/customers/{_customerToUpdate.Id}", customerToUpdateDto);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    _successMessage = "Customer information updated successfully.";
+                    _errorMessage = null;
+                    _customerToUpdate = null;
+
+                    await LoadCustomers();
+                }
+                else
+                {
+                    _errorMessage = "Failed to update customer information.";
+                }                
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"An error occurred: {ex.Message}";
+            _customerToUpdate = null;
+        }
+    }
+
+    private async Task CancelUpdateCustomer()
+    {
+        _customerToUpdate = null;
+        _errorMessage = "Edit customer cancelled.";
+        _successMessage = null;
+
+        _showCustomersList = true;
+
+        await LoadCustomers();
+    }  
 }
