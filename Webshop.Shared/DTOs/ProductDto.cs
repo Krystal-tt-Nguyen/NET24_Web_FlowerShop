@@ -7,7 +7,7 @@ public class ProductDto
     public string ProductName { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public decimal Price { get; set; }
-    public int? StockQuantity { get; set; }
+    public int StockQuantity { get; set; }
     public int ProductCategoryId { get; set; }
     public string? ProductCategoryName { get; set; }
     public bool IsDiscontinued { get; set; }

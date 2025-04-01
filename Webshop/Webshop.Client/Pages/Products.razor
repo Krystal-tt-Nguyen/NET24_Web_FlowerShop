@@ -5,7 +5,12 @@
 
 @using System.Net;
 @using Webshop.Shared.DTOs;
+@using MudBlazor;
 
+<!-- Eftersom projektet använder "Interactivity per page" måste en MudPopoverProvider 
+läggas till på varje sida som använder pop-up-komponenter för att hantera deras tillstånd korrekt,
+annars syns ex. inte MudSelectedItem-->
+<MudPopoverProvider />
 
 <PageTitle>Our Products</PageTitle>
 
@@ -26,7 +31,7 @@ else
             <div style="display: flex">
                 <MudButton Class="mb-5" Variant="Variant.Filled" Color="Color.Primary" OnClick="() => GetProductById()">Search</MudButton>
                 <MudButton Class="mb-5" Variant="Variant.Outlined" Color="Color.Primary" OnClick="() => ClearProductSearch()" style="margin-left: 10px;">Clear</MudButton>
-                @*   <MudButton Class="mb-5" Variant="Variant.Filled" Color="Color.Secondary" OnClick="() => PrepareToAddProducts()" style="margin-left: auto;">Add new product</MudButton> *@
+                <MudButton Class="mb-5" Variant="Variant.Filled" Color="Color.Secondary" OnClick="() => PrepareToAddProducts()" style="margin-left: auto;">Add product</MudButton>
             </div>
 
             @if (!string.IsNullOrEmpty(_errorMessage))
@@ -49,9 +54,9 @@ else
                         <MudTh>Product Name</MudTh>
                         <MudTh>Description</MudTh>
                         <MudTh>Price</MudTh>
-                        <MudTh>Stock Quantity</MudTh>
+                        <MudTh>Quantity</MudTh>
                         <MudTh>Category</MudTh>
-                        <MudTh>Is Discontinued</MudTh>
+                        <MudTh>Discontinued</MudTh>
                     </HeaderContent>
                     <RowTemplate>
                         <MudTd DataLabel="ID">@context.Id</MudTd>
@@ -62,11 +67,18 @@ else
                         <MudTd DataLabel="Category">@context.ProductCategoryName</MudTd>
                         <MudTd DataLabel="Is discontinued">@context.IsDiscontinued</MudTd>
                         <MudTd>
-                            <MudButton OnClick="() => PrepareToUpdateProduct(context)" Color="Color.Primary">Edit</MudButton>
+                            <MudButton OnClick="() => PrepareToUpdateProduct(context)" Color="Color.Tertiary">
+                                <MudIcon Icon="@Icons.Material.Outlined.Settings" />
+                            </MudButton>                          
+                        </MudTd>
+                        <MudTd>
+                            <MudButton OnClick="() => PrepareToDeleteProduct(context.Id)" Color="Color.Tertiary">
+                                <MudIcon Icon="@Icons.Material.Outlined.Delete" />
+                            </MudButton>
                         </MudTd>
                     </RowTemplate>
                     <PagerContent>
-                        <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100, int.MaxValue }"
+                        <MudTablePager PageSizeOptions="new int[] { 5, 10, 25, 50, 100, int.MaxValue }"
                         RowsPerPageString="@rowsPerPageString"
                         InfoFormat="@infoFormat"
                         AllItemsText="@allItemsText"
@@ -83,7 +95,7 @@ else
     @if (_productToUpdate != null)
     {
         <MudPaper Class="pa-4 mt-5">
-            <MudText Class="mb-5" Typo="Typo.h5">Edit Customer</MudText>
+            <MudText Class="mb-5" Typo="Typo.h5">Edit Product</MudText>
 
             @if (!string.IsNullOrEmpty(_errorMessage))
             {
@@ -95,21 +107,73 @@ else
             }
 
             <MudTextField @bind-Value="_productToUpdate.Id" Label="ID" Disabled=true Class="mb-3"></MudTextField>
+            <MudTextField @bind-Value="_productToUpdate.ProductNumber" Label="Internal SKU" Disabled=true Class="mb-3"></MudTextField>
             <MudTextField @bind-Value="_productToUpdate.ProductName" Label="Product name" Required="true" Class="mb-3"></MudTextField>
             <MudTextField @bind-Value="_productToUpdate.Description" Label="Description" Required="true" Class="mb-3"></MudTextField>
             <MudTextField @bind-Value="_productToUpdate.Price" Label="Price" Required="true" Class="mb-3"></MudTextField>
             <MudTextField @bind-Value="_productToUpdate.StockQuantity" Label="Stock quantity" Required="true" Class="mb-3"></MudTextField>
-            @* <MudSelect @bind-Value="_productToUpdate.ProductCategoryName" Label="Category" Required="true" Class="mb-3">
-                @foreach (var category in _categories)
-                {
-                    <MudSelectItem Value="@category">@category</MudSelectItem>
-                }
-            </MudSelect> *@
 
-            <MudTextField @bind-Value="_productToUpdate.IsDiscontinued" Label="Discontinued" Required="true" Class="mb-3"></MudTextField>
+            <MudSelect @bind-Value="_productToUpdate.ProductCategoryId" Label="Category" Required="true" Class="mb-3">                
+                @foreach (var category in _productCategories)
+                {
+                    <MudSelectItem Value="@category.Id">@category.CategoryName</MudSelectItem>
+                }          
+            </MudSelect>
+
+            <MudRadioGroup @bind-Value="_productToUpdate.IsDiscontinued" Required="true" Class="mb-3">
+                <MudRadio Value="true" Color="Color.Primary" Dense="true">Discontinued</MudRadio>
+                <MudRadio Value="false" Color="Color.Primary" Dense="false">Active</MudRadio>
+            </MudRadioGroup>
 
             <MudButton Class="mb-3" Variant="Variant.Filled" Color="Color.Primary" OnClick="() => UpdateProduct()">Save</MudButton>
             <MudButton Class="mb-3 ml-2" Variant="Variant.Outlined" Color="Color.Secondary" OnClick="CancelUpdateProduct">Cancel</MudButton>
+        </MudPaper>
+    }
+
+    @if (_showAddProduct)
+    {
+        <MudPaper Class="pa-4 mt-5">
+            <MudText Class="mb-5" Typo="Typo.h5">Add New Product</MudText>
+
+            @if (!string.IsNullOrEmpty(_errorMessage))
+            {
+                <MudText Class="mb-5" Typo="Typo.body1" Style="@($"color:{Colors.Red.Accent4};")">@_errorMessage</MudText>
+            }
+            else if (!string.IsNullOrEmpty(_successMessage))
+            {
+                <MudText Class="mb-5" Typo="Typo.body1" Style="@($"color:{Colors.Green.Accent4};")">@_successMessage</MudText>
+            }
+
+            <MudTextField @bind-Value="_productToAdd.ProductNumber" Label="Internal SKU" Required="true" Class="mb-3"></MudTextField>
+            <MudTextField @bind-Value="_productToAdd.ProductName" Label="Product Name" Required="true" Class="mb-3"></MudTextField>
+            <MudTextField @bind-Value="_productToAdd.Description" Label="Description" Required="true" Class="mb-3"></MudTextField>
+            <MudTextField @bind-Value="_productToAdd.Price" Label="Price" Required="true" Class="mb-3"></MudTextField>
+            <MudTextField @bind-Value="_productToAdd.StockQuantity" Label="Stock Quantity" Required="true" Class="mb-3"></MudTextField>
+
+            <MudSelect @bind-Value="_productToAdd.ProductCategoryId" Label="Category" Required="true" Class="mb-3">                
+                @foreach (var category in _productCategories)
+                {
+                    <MudSelectItem Value="@category.Id">@category.CategoryName</MudSelectItem>
+                }          
+            </MudSelect>
+
+            <MudRadioGroup @bind-Value="_productToAdd.IsDiscontinued" Required="true" Class="mb-3">
+                <MudRadio Value="true" Color="Color.Primary" Dense="true">Discontinued</MudRadio>
+                <MudRadio Value="false" Color="Color.Primary" Dense="false">Active</MudRadio>
+            </MudRadioGroup>
+
+            <MudButton Class="mb-3" Variant="Variant.Filled" Color="Color.Primary" OnClick="() => AddProduct()">Add</MudButton>
+            <MudButton Class="mb-3 ml-2" Variant="Variant.Outlined" Color="Color.Secondary" OnClick="CancelAddProduct">Cancel</MudButton>
+        </MudPaper>
+    }
+
+    @if (_showDeleteProduct)
+    {
+        <MudPaper Class="pa-4 mt-5">
+            <MudText Class="mb-5" Typo="Typo.h5">Are you certain you want to remove this product?</MudText>           
+
+            <MudButton Class="mb-3" Variant="Variant.Filled" Color="Color.Primary" OnClick="() => DeleteProduct()">Yes</MudButton>
+            <MudButton Class="mb-3 ml-2" Variant="Variant.Outlined" Color="Color.Primary" OnClick="CancelDeleteProduct">No</MudButton>
         </MudPaper>
     }
 }
@@ -126,19 +190,37 @@ else
     private bool _hover = true;
     private bool _isLoading = true;
     private bool _showProducts = false;
+    private bool _showAddProduct = false;
+    private bool _showDeleteProduct = false;
 
     private string? _searchId;
     private string? _errorMessage;
     private string? _successMessage;
 
+    private List<ProductCategoriesDto> _productCategories = new List<ProductCategoriesDto>();
     private List<ProductDto> _products = new List<ProductDto>();
+    private ProductDto _productToAdd = new ProductDto();
     private ProductDto? _productToUpdate;
-    // private List<string?> _categories;
+    private int? _productIdToDelete;
 
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadCategories();
         await LoadProducts();
+    }
+
+    private async Task LoadCategories()
+    {
+        try
+        {
+            _productCategories = await _httpClient.GetFromJsonAsync<List<ProductCategoriesDto>>("api/categories");
+            Console.WriteLine($"Categories loaded: {_productCategories.Count} categories"); 
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"An error occurred while fetching categories: {ex.Message}";
+        }
     }
 
     private async Task LoadProducts()
@@ -203,15 +285,85 @@ else
         await LoadProducts();
     }
 
-    private async Task PrepareToUpdateProduct(ProductDto product)
+    private void PrepareToAddProducts()
     {
+        _showProducts = false;
+        _showAddProduct = true;
+        _errorMessage = null;
+        _successMessage = null;
+
+        _productToAdd.ProductCategoryId = 5;
+    }
+
+    private async Task AddProduct()
+    {
+        if (_productToAdd == null)
+        {
+            _errorMessage = "Please fill in all required fields.";
+            return;
+        }
+
+        try
+        {
+            var newProduct = new CreateProductDto()
+            {
+                ProductNumber = _productToAdd.ProductNumber,
+                ProductName = _productToAdd.ProductName,
+                Description = _productToAdd.Description,
+                Price = _productToAdd.Price,
+                StockQuantity = _productToAdd.StockQuantity,
+                ProductCategoryId = _productToAdd.ProductCategoryId,
+                IsDiscontinued = _productToAdd.IsDiscontinued                
+            };
+
+            var response = await _httpClient.PostAsJsonAsync("api/products", newProduct);
+
+            if (response.IsSuccessStatusCode)
+            {
+                _successMessage = "Product added successfully!";
+                _errorMessage = null;
+                _productToAdd = new ProductDto();
+
+                _showAddProduct = false;
+                _showProducts = true;
+
+                await LoadProducts();
+            }
+            else
+            {
+                _errorMessage = "Failed to add product: The Internal SKU must be unique. Please check the SKU and try again.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"An error occurred: {ex.Message}";
+            _productToAdd = new ProductDto();
+        }
+    }
+
+    private async Task CancelAddProduct()
+    {
+        _productToAdd = new ProductDto();
+        _errorMessage = "Add new product cancelled.";
+        _successMessage = null;
+
+        _showProducts = true;
+        _showAddProduct = false;
+
+        await LoadProducts();
+    }
+
+    private void PrepareToUpdateProduct(ProductDto product)
+    {        
         _productToUpdate = new ProductDto
         {
             Id = product.Id,
+            ProductNumber = product.ProductNumber,
             ProductName = product.ProductName,
             Description = product.Description,
             Price = product.Price,
             StockQuantity = product.StockQuantity,
+            ProductCategoryId = product.ProductCategoryId,
             ProductCategoryName = product.ProductCategoryName,
             IsDiscontinued = product.IsDiscontinued            
         };
@@ -223,7 +375,46 @@ else
 
     private async Task UpdateProduct()
     {
+        if (_productToUpdate == null)
+        {
+            _errorMessage = "No product to update.";
+            return; 
+        }
 
+        try
+        {
+            var productToUpdateDto = new UpdateProductDto
+            {
+                ProductNumber = _productToUpdate.ProductNumber,
+                ProductName =  _productToUpdate.ProductName,
+                Description =  _productToUpdate.Description,
+                Price =  _productToUpdate.Price,
+                StockQuantity = _productToUpdate.StockQuantity,
+                ProductCategoryId = _productToUpdate.ProductCategoryId,
+                IsDiscontinued = _productToUpdate.IsDiscontinued      
+            };
+
+            var response = await _httpClient.PutAsJsonAsync($"api/products/{_productToUpdate.Id}", productToUpdateDto);
+
+            if (response.IsSuccessStatusCode)
+            {
+                _successMessage = "Product updated successfully.";
+                _errorMessage = null;
+                _productToUpdate = null;
+
+                await LoadProducts();
+            }
+            else
+            {
+                _errorMessage = "Failed to update product.";
+            }                
+
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"An error occurred: {ex.Message}";
+            _productToUpdate = null;
+        }
     }
 
     private async Task CancelUpdateProduct()
@@ -237,13 +428,47 @@ else
         await LoadProducts();
     }
 
+    private void PrepareToDeleteProduct(int id)
+    {
+        _showProducts = false;
+        _showDeleteProduct = true;
+        _productIdToDelete = id;
+    }
 
+    private async Task DeleteProduct()
+    {
+        try
+        {
+            var response = await _httpClient.DeleteAsync($"api/products/{_productIdToDelete}");
 
+            if (response.IsSuccessStatusCode)
+            {
+                _successMessage = "Product deleted successfully.";
+                _errorMessage = null;
+                _productToUpdate = null;
 
+                await LoadProducts();
+            }
+            else
+            {
+                _errorMessage = "Failed to delete product.";
+                _productIdToDelete = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"An error occurred: {ex.Message}";
+        }
+    }
 
-    // private void PrepareToAddProducts()
-    // {
-
-    // }
+    private async Task CancelDeleteProduct()
+    {
+        _productIdToDelete = null;
+        _errorMessage = "Delete product cancelled.";
+        _successMessage = null;
+        
+        _showDeleteProduct = false;
+        _showProducts = true;
+    }
 }
 
