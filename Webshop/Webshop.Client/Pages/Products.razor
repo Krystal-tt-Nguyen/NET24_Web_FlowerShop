@@ -1,0 +1,249 @@
+﻿@page "/products"
+@inject HttpClient _httpClient
+@inject NavigationManager Navigation
+@rendermode InteractiveWebAssembly
+
+@using System.Net;
+@using Webshop.Shared.DTOs;
+
+
+<PageTitle>Our Products</PageTitle>
+
+@if (_isLoading)
+{
+    <MudProgressCircular Color="Color.Default" Indeterminate="true" />
+    <MudText Class="mt-5" Typo="Typo.body1">Loading products ...</MudText>
+}
+else
+{
+    @if (_showProducts)
+    {
+        <MudPaper Class="pa-4">
+            <MudText Class="mb-5" Typo="Typo.h4">Product Management</MudText>
+
+            <MudTextField Class="mb-5" @bind-Value="_searchId" Label="Search by product ID" Adornment="Adornment.Start" Icon="@Icons.Material.Filled.Search"></MudTextField>
+
+            <div style="display: flex">
+                <MudButton Class="mb-5" Variant="Variant.Filled" Color="Color.Primary" OnClick="() => GetProductById()">Search</MudButton>
+                <MudButton Class="mb-5" Variant="Variant.Outlined" Color="Color.Primary" OnClick="() => ClearProductSearch()" style="margin-left: 10px;">Clear</MudButton>
+                @*   <MudButton Class="mb-5" Variant="Variant.Filled" Color="Color.Secondary" OnClick="() => PrepareToAddProducts()" style="margin-left: auto;">Add new product</MudButton> *@
+            </div>
+
+            @if (!string.IsNullOrEmpty(_errorMessage))
+            {
+                <MudText Class="mb-5" Typo="Typo.body1" Style="@($"color:{Colors.Red.Accent4};")">@_errorMessage</MudText>
+            }
+            else if (!string.IsNullOrEmpty(_successMessage))
+            {
+                <MudText Class="mb-5" Typo="Typo.body1" Style="@($"color:{Colors.Green.Accent4};")">@_successMessage</MudText>
+            }
+
+            @if (_products != null && _products.Any())
+            {
+                <MudTable Items="@_products" Hover="@_hover" Class="mb-5">
+                    <ToolBarContent>
+                        <MudText Typo="Typo.h6">All products</MudText>
+                    </ToolBarContent>
+                    <HeaderContent>
+                        <MudTh>ID</MudTh>
+                        <MudTh>Product Name</MudTh>
+                        <MudTh>Description</MudTh>
+                        <MudTh>Price</MudTh>
+                        <MudTh>Stock Quantity</MudTh>
+                        <MudTh>Category</MudTh>
+                        <MudTh>Is Discontinued</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="ID">@context.Id</MudTd>
+                        <MudTd DataLabel="Product Name">@context.ProductName</MudTd>
+                        <MudTd DataLabel="Description">@context.Description</MudTd>
+                        <MudTd DataLabel="Price">@context.Price</MudTd>
+                        <MudTd DataLabel="Stock Quantity">@context.StockQuantity</MudTd>
+                        <MudTd DataLabel="Category">@context.ProductCategoryName</MudTd>
+                        <MudTd DataLabel="Is discontinued">@context.IsDiscontinued</MudTd>
+                        <MudTd>
+                            <MudButton OnClick="() => PrepareToUpdateProduct(context)" Color="Color.Primary">Edit</MudButton>
+                        </MudTd>
+                    </RowTemplate>
+                    <PagerContent>
+                        <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100, int.MaxValue }"
+                        RowsPerPageString="@rowsPerPageString"
+                        InfoFormat="@infoFormat"
+                        AllItemsText="@allItemsText"
+                        HorizontalAlignment="@horizontalAlignment"
+                        HideRowsPerPage="@hideRowsPerPage"
+                        HidePageNumber="@hidePageNumber"
+                        HidePagination="@hidePagination" />
+                    </PagerContent>
+                </MudTable>               
+            }
+        </MudPaper>
+    }
+
+    @if (_productToUpdate != null)
+    {
+        <MudPaper Class="pa-4 mt-5">
+            <MudText Class="mb-5" Typo="Typo.h5">Edit Customer</MudText>
+
+            @if (!string.IsNullOrEmpty(_errorMessage))
+            {
+                <MudText Class="mb-5" Typo="Typo.body1" Style="@($"color:{Colors.Red.Accent4};")">@_errorMessage</MudText>
+            }
+            else if (!string.IsNullOrEmpty(_successMessage))
+            {
+                <MudText Class="mb-5" Typo="Typo.body1" Style="@($"color:{Colors.Green.Accent4};")">@_successMessage</MudText>
+            }
+
+            <MudTextField @bind-Value="_productToUpdate.Id" Label="ID" Disabled=true Class="mb-3"></MudTextField>
+            <MudTextField @bind-Value="_productToUpdate.ProductName" Label="Product name" Required="true" Class="mb-3"></MudTextField>
+            <MudTextField @bind-Value="_productToUpdate.Description" Label="Description" Required="true" Class="mb-3"></MudTextField>
+            <MudTextField @bind-Value="_productToUpdate.Price" Label="Price" Required="true" Class="mb-3"></MudTextField>
+            <MudTextField @bind-Value="_productToUpdate.StockQuantity" Label="Stock quantity" Required="true" Class="mb-3"></MudTextField>
+            @* <MudSelect @bind-Value="_productToUpdate.ProductCategoryName" Label="Category" Required="true" Class="mb-3">
+                @foreach (var category in _categories)
+                {
+                    <MudSelectItem Value="@category">@category</MudSelectItem>
+                }
+            </MudSelect> *@
+
+            <MudTextField @bind-Value="_productToUpdate.IsDiscontinued" Label="Discontinued" Required="true" Class="mb-3"></MudTextField>
+
+            <MudButton Class="mb-3" Variant="Variant.Filled" Color="Color.Primary" OnClick="() => UpdateProduct()">Save</MudButton>
+            <MudButton Class="mb-3 ml-2" Variant="Variant.Outlined" Color="Color.Secondary" OnClick="CancelUpdateProduct">Cancel</MudButton>
+        </MudPaper>
+    }
+}
+
+@code {
+    private HorizontalAlignment horizontalAlignment = HorizontalAlignment.Right;
+    private bool hidePageNumber;
+    private bool hidePagination;
+    private bool hideRowsPerPage;
+    private string rowsPerPageString = "Rows per page:";
+    private string infoFormat = "{first_item}-{last_item} of {all_items}";
+    private string allItemsText = "All";
+
+    private bool _hover = true;
+    private bool _isLoading = true;
+    private bool _showProducts = false;
+
+    private string? _searchId;
+    private string? _errorMessage;
+    private string? _successMessage;
+
+    private List<ProductDto> _products = new List<ProductDto>();
+    private ProductDto? _productToUpdate;
+    // private List<string?> _categories;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProducts();
+    }
+
+    private async Task LoadProducts()
+    {
+        try
+        {
+            _products = await _httpClient.GetFromJsonAsync<List<ProductDto>>("api/products");
+            _isLoading = false;
+            _showProducts = true;
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"An error occurred while fetching products: {ex.Message}";
+        }
+    }
+
+    private async Task GetProductById()
+    {
+        _errorMessage = null;
+        _successMessage = null;
+        _products.Clear();
+
+        try
+        {
+            if (string.IsNullOrWhiteSpace(_searchId))
+            {
+                await LoadProducts();
+            }
+            else
+            {
+                var response = await _httpClient.GetAsync($"api/products/{_searchId}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var product = await response.Content.ReadFromJsonAsync<ProductDto>();
+
+                    if (product != null)
+                    {
+                        _products.Add(product);
+                    }
+                }
+                else if (response.StatusCode == HttpStatusCode.NotFound)
+                {
+                    _errorMessage = "No product found with given product ID";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = "An error occurred while searching for selected product.";
+
+            Console.Error.WriteLine($"An error occurred: {ex.Message}");
+        }
+    }
+
+    private async Task ClearProductSearch()
+    {
+        _searchId = string.Empty;
+        _errorMessage = null;
+        _successMessage = null;
+
+        await LoadProducts();
+    }
+
+    private async Task PrepareToUpdateProduct(ProductDto product)
+    {
+        _productToUpdate = new ProductDto
+        {
+            Id = product.Id,
+            ProductName = product.ProductName,
+            Description = product.Description,
+            Price = product.Price,
+            StockQuantity = product.StockQuantity,
+            ProductCategoryName = product.ProductCategoryName,
+            IsDiscontinued = product.IsDiscontinued            
+        };
+
+        _showProducts = false;
+        _errorMessage = null;
+        _successMessage = null;        
+    }
+
+    private async Task UpdateProduct()
+    {
+
+    }
+
+    private async Task CancelUpdateProduct()
+    {
+        _productToUpdate = null;
+        _errorMessage = "Edit product cancelled.";
+        _successMessage = null;
+
+        _showProducts = true;
+
+        await LoadProducts();
+    }
+
+
+
+
+
+    // private void PrepareToAddProducts()
+    // {
+
+    // }
+}
+

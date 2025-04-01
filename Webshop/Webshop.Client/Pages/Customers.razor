@@ -7,14 +7,16 @@
 @using Webshop.Shared.DTOs;
 
 
+<PageTitle>Our Customers</PageTitle>
+
 @if (_isLoading)
 {
     <MudProgressCircular Color="Color.Default" Indeterminate="true" />
-    <MudText Class="mt-5" Typo="Typo.body1">Loading page ...</MudText>
+    <MudText Class="mt-5" Typo="Typo.body1">Loading customers ...</MudText>
 }
 else
 {
-    @if (_showCustomersList)
+    @if (_showCustomers)
     {
         <MudPaper Class="pa-4">
             <MudText Class="mb-5" Typo="Typo.h4">Customer Management</MudText>
@@ -116,15 +118,13 @@ else
 }
 
 
-
-
 @code {
     private string? _emailSearch;
     private string? _errorMessage;
     private string? _successMessage;
 
     private bool _isLoading = true;
-    private bool _showCustomersList = true;
+    private bool _showCustomers = false;
     private bool _showAddCustomer = false;
 
     private List<CustomerDto> _customers = new List<CustomerDto>();
@@ -143,7 +143,7 @@ else
         {
             _customers = await _httpClient.GetFromJsonAsync<List<CustomerDto>>("api/customers");
             _isLoading = false;
-            _showCustomersList = true;
+            _showCustomers = true;
         }
         catch (Exception ex)
         {
@@ -202,7 +202,7 @@ else
 
     private void PrepareToAddCustomer()
     {
-        _showCustomersList = false;
+        _showCustomers = false;
         _showAddCustomer = true;
         _errorMessage = null;
         _successMessage = null;
@@ -236,7 +236,7 @@ else
                 _customerToAdd = new CustomerDto();
                 
                 _showAddCustomer = false;
-                _showCustomersList = true;
+                _showCustomers = true;
 
                 await LoadCustomers();
             }
@@ -259,7 +259,7 @@ else
         _errorMessage = "Add new customer cancelled.";
         _successMessage = null;
 
-        _showCustomersList = true;
+        _showCustomers = true;
         _showAddCustomer = false;
 
         await LoadCustomers();
@@ -278,7 +278,7 @@ else
             StreetAddress = customer.StreetAddress
         };
 
-        _showCustomersList = false;
+        _showCustomers = false;
         _errorMessage = null;
         _successMessage = null;
     }
@@ -346,7 +346,7 @@ else
         _errorMessage = "Edit customer cancelled.";
         _successMessage = null;
 
-        _showCustomersList = true;
+        _showCustomers = true;
 
         await LoadCustomers();
     }  

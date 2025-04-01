@@ -16,7 +16,6 @@ builder.Services.AddMudServices();
 builder.Services.AddRazorComponents()
     .AddInteractiveWebAssemblyComponents();
 
-//builder.Services.AddHttpClient();
 //Add Http Client so that FE can call API on server side
 builder.Services.AddHttpClient("api", client =>
 {
@@ -39,11 +38,13 @@ builder.Services.AddDbContext<FlowerboutiqueContext>(options
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IProductCategoriesService, ProductCategoriesService>();
 
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IOrderItemRepository, OrderItemRepository>();
+builder.Services.AddScoped<IProductCategoriesRepository, ProductCategoriesRepository>();
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
