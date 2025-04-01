@@ -6,6 +6,7 @@
 @using System.Net;
 @using Webshop.Shared.DTOs;
 
+<MudPopoverProvider />
 
 <PageTitle>Our Customers</PageTitle>
 
@@ -40,7 +41,10 @@ else
 
             @if (_customers != null && _customers.Any())
             {
-                <MudTable Items="@_customers" Hover="true">
+                <MudTable Items="@_customers" Hover="true" Class="mb-5">
+                    <ToolBarContent>
+                        <MudText Typo="Typo.h6">All products</MudText>
+                    </ToolBarContent>
                     <HeaderContent>
                         <MudTh>ID</MudTh>
                         <MudTh>First Name</MudTh>
@@ -48,6 +52,7 @@ else
                         <MudTh>Email</MudTh>
                         <MudTh>Phone Number</MudTh>
                         <MudTh>Street Address</MudTh>
+                        <MudTh>Actions</MudTh>
                     </HeaderContent>
                     <RowTemplate>
                         <MudTd>@context.Id</MudTd>
@@ -57,9 +62,19 @@ else
                         <MudTd>@context.PhoneNumber</MudTd>
                         <MudTd>@context.StreetAddress</MudTd>
                         <MudTd>
-                        <MudButton OnClick="() => PrepareToUpdateCustomer(context)" Variant="Variant.Outlined" Color="Color.Tertiary">Edit</MudButton>
+                            <MudButton OnClick="() => PrepareToUpdateCustomer(context)" Variant="Variant.Outlined" Color="Color.Tertiary">Edit</MudButton>
                         </MudTd>
                     </RowTemplate>
+                    <PagerContent>
+                        <MudTablePager PageSizeOptions="new int[] { 5, 10, 25, 50, 100, int.MaxValue }"
+                                       RowsPerPageString="@rowsPerPageString"
+                                       InfoFormat="@infoFormat"
+                                       AllItemsText="@allItemsText"
+                                       HorizontalAlignment="@horizontalAlignment"
+                                       HideRowsPerPage="@hideRowsPerPage"
+                                       HidePageNumber="@hidePageNumber"
+                                       HidePagination="@hidePagination" />
+                    </PagerContent>
                 </MudTable>
             }
         </MudPaper>
@@ -111,14 +126,22 @@ else
             <MudTextField @bind-Value="_customerToAdd.PhoneNumber" Label="Phone Number" Required="true" Class="mb-3"></MudTextField>
             <MudTextField @bind-Value="_customerToAdd.StreetAddress" Label="Street Address" Required="true" Class="mb-3"></MudTextField>
 
-            <MudButton Class="mb-3" Variant="Variant.Filled" Color="Color.Primary" OnClick="() => AddCustomer()">Add</MudButton>
-            <MudButton Class="mb-3 ml-2" Variant="Variant.Outlined" Color="Color.Secondary" OnClick="CancelAddCustomer">Cancel</MudButton>
+            <MudButton Class="mt-3 mb-3" Variant="Variant.Filled" Color="Color.Primary" OnClick="() => AddCustomer()">Add</MudButton>
+            <MudButton Class="mt-3 mb-3 ml-2" Variant="Variant.Outlined" Color="Color.Secondary" OnClick="CancelAddCustomer">Cancel</MudButton>
         </MudPaper>
     }
 }
 
 
 @code {
+    private HorizontalAlignment horizontalAlignment = HorizontalAlignment.Right;
+    private bool hidePageNumber;
+    private bool hidePagination;
+    private bool hideRowsPerPage;
+    private string rowsPerPageString = "Rows per page:";
+    private string infoFormat = "{first_item}-{last_item} of {all_items}";
+    private string allItemsText = "All";
+
     private string? _emailSearch;
     private string? _errorMessage;
     private string? _successMessage;
