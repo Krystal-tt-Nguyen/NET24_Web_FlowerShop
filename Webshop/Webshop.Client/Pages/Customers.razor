@@ -170,6 +170,7 @@ else
         }
         catch (Exception ex)
         {
+            _isLoading = false;
             _errorMessage = $"An error occurred while fetching customers: {ex.Message}";
         }        
     }
@@ -259,7 +260,6 @@ else
                 _customerToAdd = new CustomerDto();
                 
                 _showAddCustomer = false;
-                _showCustomers = true;
 
                 await LoadCustomers();
             }

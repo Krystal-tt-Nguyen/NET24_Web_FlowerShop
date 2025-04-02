@@ -13,6 +13,15 @@ public class OrderRepository : IOrderRepository
         _context = context ?? throw new ArgumentNullException(nameof(context));
     }
 
+    public async Task<IEnumerable<Order>> GetAllOrdersAsync()
+    {
+        return await _context.Orders
+            .Include(o => o.Customer)           
+            .Include(o => o.OrderItems)         
+            .ThenInclude(oi => oi.Product)      
+            .ToListAsync();                    
+    }
+
     public async Task<Order?> GetOrderById(int id)
         => await _context.Orders
                 .Include(o => o.Customer)

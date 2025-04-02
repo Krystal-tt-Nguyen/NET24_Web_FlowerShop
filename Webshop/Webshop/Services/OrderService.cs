@@ -27,6 +27,18 @@ public class OrderService : IOrderService
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
     }
 
+    public async Task<IEnumerable<OrderDto>> GetAllOrdersAsync()
+    {
+        var orders = await _orderRepository.GetAllOrdersAsync();
+
+        if (orders == null || !orders.Any())
+        {
+            return null;
+        }
+
+        return _mapper.Map<IEnumerable<OrderDto>>(orders);
+    }
+
     public async Task<OrderDto> GetByOrderIdAsync(int id)
     {
         var order = await _orderRepository.GetOrderById(id);

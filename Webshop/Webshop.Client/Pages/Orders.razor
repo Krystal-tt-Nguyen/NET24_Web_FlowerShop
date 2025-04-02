@@ -1,0 +1,108 @@
+﻿@page "/orders"
+@inject HttpClient _httpClient
+@inject NavigationManager Navigation
+@rendermode InteractiveWebAssembly
+
+@using System.Net;
+@using Webshop.Shared.DTOs;
+
+<MudPopoverProvider />
+
+<PageTitle>Orders</PageTitle>
+
+@if (_isLoading)
+{
+    <MudProgressCircular Color="Color.Default" Indeterminate="true" />
+    <MudText Class="mt-5" Typo="Typo.body1">Loading orders ...</MudText>
+}
+else
+{
+    @if (_showOrders)
+    {
+        <MudPaper Class="pa-4">
+            <MudText Class="mb-5" Typo="Typo.h4">Order Management</MudText>
+
+            @if (!string.IsNullOrEmpty(_errorMessage))
+            {
+                <MudText Class="mb-5" Typo="Typo.body1" Style="@($"color:{Colors.Red.Accent4};")">@_errorMessage</MudText>
+            }
+            else if (!string.IsNullOrEmpty(_successMessage))
+            {
+                <MudText Class="mb-5" Typo="Typo.body1" Style="@($"color:{Colors.Green.Accent4};")">@_successMessage</MudText>
+            }
+
+            @if (_orders is null || !_orders.Any())
+            {
+                _errorMessage = "No orders are available at the moment.";
+            }
+            else
+            {               
+                <MudExpansionPanels MultiExpansion="true">
+                    @foreach (var order in _orders)
+                    {
+                        <MudExpansionPanel Text="@order.Id.ToString()">
+                            <div style="display: flex; justify-content: space-between">
+                                <div>
+                                    <MudText>Customer information</MudText>
+                                    <MudText>Customer name: @order.Customer.FirstName @order.Customer.LastName</MudText>
+                                    <MudText>Address: @order.Customer.StreetAddress</MudText>
+                                    <MudText>Phone number: @order.Customer.PhoneNumber</MudText>
+                                    <MudText>Email: @order.Customer.Email</MudText>
+                                </div>
+                                <div>
+                                    <MudText>Order ID: @order.Id</MudText>
+                                    <MudText>Order Date: @order.OrderDate.ToString("yyyy-MM-dd")</MudText>
+                                    <MudText>Order Status: @order.OrderStatus</MudText>
+                                </div>
+                            </div>
+
+                            <div>
+                                @foreach (var item in order.OrderItems)
+                                {
+                                    <MudText>PRoduct name: @item.ProductName</MudText>
+                                    <MudText>Quantity: @item.Quantity</MudText>
+                                    <MudText>Unit price: @item.UnitPrice.ToString()</MudText>
+                                    <MudText>Sub total: @item.TotalPrice.ToString()</MudText>
+                                }
+                            </div>            
+                            
+                            <MudText>Total amount: @order.OrderItems.Sum(i => i.TotalPrice).ToString() kr</MudText>
+                        </MudExpansionPanel>
+                    }
+                </MudExpansionPanels>                            
+            }
+        </MudPaper>
+    }
+}
+
+
+@code {
+    private bool _isLoading = true;
+    private bool _showOrders = false;
+
+    private string? _errorMessage;
+    private string? _successMessage;
+
+    private List<OrderDto> _orders = new List<OrderDto>();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadOrders();
+    }
+
+    private async Task LoadOrders()
+    {
+        try
+        {
+            _orders = await _httpClient.GetFromJsonAsync<List<OrderDto>>("api/orders");
+            _isLoading = false;
+            _showOrders = true;
+        }
+        catch (Exception ex)
+        {
+            _isLoading = false;
+            _errorMessage = $"An error occurred while fetching orders: {ex.Message}";
+        }
+    }
+}

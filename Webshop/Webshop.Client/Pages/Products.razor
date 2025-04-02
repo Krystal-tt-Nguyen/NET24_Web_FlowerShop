@@ -5,7 +5,6 @@
 
 @using System.Net;
 @using Webshop.Shared.DTOs;
-@using MudBlazor;
 
 <!-- Eftersom projektet använder "Interactivity per page" måste en MudPopoverProvider 
 läggas till på varje sida som använder pop-up-komponenter för att hantera deras tillstånd korrekt,
@@ -79,13 +78,13 @@ else
                     </RowTemplate>
                     <PagerContent>
                         <MudTablePager PageSizeOptions="new int[] { 5, 10, 25, 50, 100, int.MaxValue }"
-                                       RowsPerPageString="@rowsPerPageString"
-                                       InfoFormat="@infoFormat"
-                                       AllItemsText="@allItemsText"
-                                       HorizontalAlignment="@horizontalAlignment"
-                                       HideRowsPerPage="@hideRowsPerPage"
-                                       HidePageNumber="@hidePageNumber"
-                                       HidePagination="@hidePagination" />
+                        RowsPerPageString="@rowsPerPageString"
+                        InfoFormat="@infoFormat"
+                        AllItemsText="@allItemsText"
+                        HorizontalAlignment="@horizontalAlignment"
+                        HideRowsPerPage="@hideRowsPerPage"
+                        HidePageNumber="@hidePageNumber"
+                        HidePagination="@hidePagination" />
                     </PagerContent>
                 </MudTable>               
             }
@@ -214,7 +213,6 @@ else
         try
         {
             _productCategories = await _httpClient.GetFromJsonAsync<List<ProductCategoriesDto>>("api/categories");
-            Console.WriteLine($"Categories loaded: {_productCategories.Count} categories"); 
         }
         catch (Exception ex)
         {
@@ -232,6 +230,7 @@ else
         }
         catch (Exception ex)
         {
+            _isLoading = false;
             _errorMessage = $"An error occurred while fetching products: {ex.Message}";
         }
     }
@@ -445,6 +444,8 @@ else
                 _successMessage = "Product deleted successfully.";
                 _errorMessage = null;
                 _productToUpdate = null;
+
+                _showDeleteProduct = false;
 
                 await LoadProducts();
             }

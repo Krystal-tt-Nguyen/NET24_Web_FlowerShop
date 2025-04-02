@@ -16,6 +16,18 @@ public class OrdersController : ControllerBase
             ?? throw new ArgumentNullException(nameof(orderService));
     }
 
+    [HttpGet] 
+    public async Task<ActionResult<IEnumerable<OrderDto>>> GetAllOrders()
+    {
+        var orders = await _orderService.GetAllOrdersAsync();
+
+        if (orders is null || !orders.Any())
+        {
+            return NotFound("No orders found. Please try again later.");
+        }
+
+        return Ok(orders);
+    }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<OrderDto>> GetOrderById(int id)
