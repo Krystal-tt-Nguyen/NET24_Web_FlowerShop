@@ -16,74 +16,142 @@
     <MudText Class="mt-5" Typo="Typo.body1">Loading orders ...</MudText>
 }
 else
-{
-    @if (_showOrders)
-    {
-        <MudPaper Class="pa-4">
-            <MudText Class="mb-5" Typo="Typo.h4">Order Management</MudText>
+{        
+    <MudPaper Class="pa-4">
+        <MudText Class="mb-5" Typo="Typo.h4">Order Management</MudText>
 
-            @if (!string.IsNullOrEmpty(_errorMessage))
-            {
-                <MudText Class="mb-5" Typo="Typo.body1" Style="@($"color:{Colors.Red.Accent4};")">@_errorMessage</MudText>
-            }
-            else if (!string.IsNullOrEmpty(_successMessage))
-            {
-                <MudText Class="mb-5" Typo="Typo.body1" Style="@($"color:{Colors.Green.Accent4};")">@_successMessage</MudText>
-            }
+        <MudTextField Class="mb-5" @bind-Value="_searchCustomerId" Label="Search order(s) by customer ID" Adornment="Adornment.Start" Icon="@Icons.Material.Filled.Search"></MudTextField>
 
+        <div style="display: flex">
+            <MudButton Class="mb-5" Variant="Variant.Filled" Color="Color.Primary" OnClick="() => GetOrdersByCustomerId()">Search</MudButton>
+            <MudButton Class="mb-5" Variant="Variant.Outlined" Color="Color.Primary" OnClick="() => ClearOrderSearch()" style="margin-left: 10px;">Clear</MudButton>
+        </div>
+
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <MudText Class="mb-5" Typo="Typo.body1" Style="@($"color:{Colors.Red.Accent4};")">@_errorMessage</MudText>
+        }
+        else if (!string.IsNullOrEmpty(_successMessage))
+        {
+            <MudText Class="mb-5" Typo="Typo.body1" Style="@($"color:{Colors.Green.Accent4};")">@_successMessage</MudText>
+        }
+
+        @if (_showAllOrders)
+        {
             @if (_orders is null || !_orders.Any())
             {
                 _errorMessage = "No orders are available at the moment.";
             }
             else
-            {               
+            {
+                <MudText Class="mb-5" Typo="Typo.h6">All orders</MudText>
+
                 <MudExpansionPanels MultiExpansion="true">
                     @foreach (var order in _orders)
                     {
-                        <MudExpansionPanel Text="@order.Id.ToString()">
+                        <MudExpansionPanel Text="@($"Order ID: {order.Id.ToString()}")">
                             <div style="display: flex; justify-content: space-between">
                                 <div>
-                                    <MudText>Customer information</MudText>
-                                    <MudText>Customer name: @order.Customer.FirstName @order.Customer.LastName</MudText>
-                                    <MudText>Address: @order.Customer.StreetAddress</MudText>
-                                    <MudText>Phone number: @order.Customer.PhoneNumber</MudText>
-                                    <MudText>Email: @order.Customer.Email</MudText>
+                                    <MudText Typo="Typo.body1" Class="mb-3">Customer information</MudText>
+                                    <MudText Typo="Typo.body2"><strong>Customer ID:</strong> @order.Customer.Id</MudText>
+                                    <MudText Typo="Typo.body2"><strong>Customer name:</strong> @order.Customer.FirstName @order.Customer.LastName</MudText>
+                                    <MudText Typo="Typo.body2"><strong>Address:</strong> @order.Customer.StreetAddress</MudText>
+                                    <MudText Typo="Typo.body2"><strong>Phone number:</strong> @order.Customer.PhoneNumber</MudText>
+                                    <MudText Typo="Typo.body2"><strong>Email:</strong> @order.Customer.Email</MudText>
                                 </div>
                                 <div>
-                                    <MudText>Order ID: @order.Id</MudText>
-                                    <MudText>Order Date: @order.OrderDate.ToString("yyyy-MM-dd")</MudText>
-                                    <MudText>Order Status: @order.OrderStatus</MudText>
+                                    <MudText Typo="Typo.body1" Class="mb-3">Order information</MudText>
+                                    <MudText Typo="Typo.body2"><strong>Order ID:</strong> @order.Id</MudText>
+                                    <MudText Typo="Typo.body2"><strong>Order Date:</strong> @order.OrderDate.ToString("yy-MM-dd")</MudText>
+                                    <MudText Typo="Typo.body2"><strong>Order Status:</strong> @order.OrderStatus</MudText>
                                 </div>
                             </div>
 
+                            <MudDivider Class="my-4" />                            
+
                             <div>
+                                <MudText Typo="Typo.body1" Class="mb-3">Order Items</MudText>
                                 @foreach (var item in order.OrderItems)
                                 {
-                                    <MudText>PRoduct name: @item.ProductName</MudText>
-                                    <MudText>Quantity: @item.Quantity</MudText>
-                                    <MudText>Unit price: @item.UnitPrice.ToString()</MudText>
-                                    <MudText>Sub total: @item.TotalPrice.ToString()</MudText>
+                                    <MudCard Class="pa-3 mb-3">
+                                        <MudText Typo="Typo.body2"><strong>Product name</strong>: @item.ProductName</MudText>
+                                        <MudText Typo="Typo.body2"><strong>Quantity:</strong> @item.Quantity</MudText>
+                                        <MudText Typo="Typo.body2"><strong>Unit price:</strong> @item.UnitPrice.ToString("0.00")</MudText>
+                                        <MudText Typo="Typo.body2"><strong>Sub total:</strong> @item.TotalPrice.ToString("0.00")</MudText>
+                                    </MudCard>
                                 }
-                            </div>            
-                            
-                            <MudText>Total amount: @order.OrderItems.Sum(i => i.TotalPrice).ToString() kr</MudText>
+                            </div>
+
+                            <MudDivider Class="my-4" />
+
+                            <MudText Typo="Typo.h6" Class="mt-3"><strong>Total amount:</strong> @order.OrderItems.Sum(i => i.TotalPrice).ToString("0.00") kr</MudText>
+
                         </MudExpansionPanel>
                     }
-                </MudExpansionPanels>                            
+                </MudExpansionPanels>
             }
-        </MudPaper>
-    }
+        }
+
+        @if (_showCustomerOrder)
+        {                                     
+            <MudCard Class="pa-4 mb-5">
+                <MudText Typo="Typo.body1" Class="mb-3">Customer information</MudText>
+                <MudText Typo="Typo.body2"><strong>Customer ID:</strong> @_customer.Id</MudText>
+                <MudText Typo="Typo.body2"><strong>Customer name:</strong> @_customer.FirstName @_customer.LastName</MudText>
+                <MudText Typo="Typo.body2"><strong>Address:</strong> @_customer.StreetAddress</MudText>
+                <MudText Typo="Typo.body2"><strong>Phone number:</strong> @_customer.PhoneNumber</MudText>
+            </MudCard>            
+
+            <MudExpansionPanels MultiExpansion="true">
+                @foreach (var customerOrder in _customerOrders)
+                {
+                    <MudExpansionPanel Text="@($"Order ID: {customerOrder.Id.ToString()}")">                       
+                        <div>
+                            <MudText Typo="Typo.body1" Class="mb-3">Order information</MudText>
+                            <MudText Typo="Typo.body2"><strong>Order ID:</strong> @customerOrder.Id</MudText>
+                            <MudText Typo="Typo.body2"><strong>Order Date:</strong> @customerOrder.OrderDate.ToString("yy-MM-dd")</MudText>
+                            <MudText Typo="Typo.body2"><strong>Order Status:</strong> @customerOrder.OrderStatus</MudText>
+                        </div>
+
+                        <MudDivider Class="my-4" />
+
+                        <div>
+                            <MudText Typo="Typo.body1" Class="mb-3">Order Items</MudText>
+                            @foreach (var item in customerOrder.OrderItems)
+                            {
+                                <MudCard Class="pa-3 mb-3">
+                                    <MudText Typo="Typo.body2"><strong>Product name</strong>: @item.ProductName</MudText>
+                                    <MudText Typo="Typo.body2"><strong>Quantity:</strong> @item.Quantity</MudText>
+                                    <MudText Typo="Typo.body2"><strong>Unit price:</strong> @item.UnitPrice.ToString("0.00")</MudText>
+                                    <MudText Typo="Typo.body2"><strong>Sub total:</strong> @item.TotalPrice.ToString("0.00")</MudText>
+                                </MudCard>
+                            }
+                        </div>
+
+                        <MudDivider Class="my-4" />
+
+                        <MudText Typo="Typo.h6" Class="mt-3"><strong>Total amount:</strong> @customerOrder.OrderItems.Sum(i => i.TotalPrice).ToString("0.00") kr</MudText>
+                    </MudExpansionPanel>
+                }
+            </MudExpansionPanels>
+        }
+
+    </MudPaper>   
 }
 
 
 @code {
     private bool _isLoading = true;
-    private bool _showOrders = false;
+    private bool _showAllOrders = false;
+    private bool _showCustomerOrder = false;
 
+    private string? _searchCustomerId;
     private string? _errorMessage;
     private string? _successMessage;
 
+    private CustomerDto _customer = new CustomerDto();
     private List<OrderDto> _orders = new List<OrderDto>();
+    private List<OrderDto> _customerOrders = new List<OrderDto>();
 
 
     protected override async Task OnInitializedAsync()
@@ -96,13 +164,85 @@ else
         try
         {
             _orders = await _httpClient.GetFromJsonAsync<List<OrderDto>>("api/orders");
+            _showAllOrders = true;
             _isLoading = false;
-            _showOrders = true;
         }
         catch (Exception ex)
         {
-            _isLoading = false;
             _errorMessage = $"An error occurred while fetching orders: {ex.Message}";
+            _isLoading = false;
         }
+    }
+
+    private async Task GetOrdersByCustomerId()
+    {
+        _errorMessage = null;
+        _successMessage = null;
+        _customerOrders.Clear();
+
+        try
+        {
+            if (string.IsNullOrWhiteSpace(_searchCustomerId))
+            {
+                await LoadOrders();
+                _showCustomerOrder = false;
+            }
+            else
+            {   
+                int customerId = Convert.ToInt32(_searchCustomerId);
+
+                var customer = await _httpClient.GetAsync($"api/customers/{customerId}");
+
+                if (customer.IsSuccessStatusCode)
+                {
+                    _customer = await customer.Content.ReadFromJsonAsync<CustomerDto>();
+
+                    _showAllOrders = false;
+                    _showCustomerOrder = true;
+                }
+                else if (customer.StatusCode == HttpStatusCode.NotFound)
+                {
+                    _errorMessage = "No customer found with given customer ID.";
+
+                    _showCustomerOrder = false;
+                    return;
+                }
+
+                var response = await _httpClient.GetAsync($"api/orders/customer/{customerId}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var orders = await response.Content.ReadFromJsonAsync<List<OrderDto>>();
+
+                    if (orders != null)
+                    {
+                        _customerOrders.AddRange(orders);
+                    }
+
+                    _successMessage = $"Found {orders.Count} order(s) for customer below";
+                }
+                else if (response.StatusCode == HttpStatusCode.NotFound)
+                {
+                    _errorMessage = "No orders found for selected customer.";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = "An error occurred while searching for selected order.";
+
+            Console.Error.WriteLine($"An error occurred: {ex.Message}");
+        }
+    }
+
+    private async Task ClearOrderSearch()
+    {
+        _searchCustomerId = string.Empty;
+        _errorMessage = null;
+        _successMessage = null;
+
+        _showCustomerOrder = false;
+
+        await LoadOrders();        
     }
 }
