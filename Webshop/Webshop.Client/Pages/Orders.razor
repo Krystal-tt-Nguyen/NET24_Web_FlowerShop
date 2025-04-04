@@ -20,7 +20,7 @@ else
     <MudPaper Class="pa-4">
         <MudText Class="mb-5" Typo="Typo.h4">Order Management</MudText>
 
-        <MudTextField Class="mb-5" @bind-Value="_searchCustomerId" Label="Search order(s) by customer ID" Adornment="Adornment.Start" Icon="@Icons.Material.Filled.Search"></MudTextField>
+        <MudTextField Class="mb-5" @bind-Value="_searchCustomer" Label="Search order(s) by customer ID" Adornment="Adornment.Start" Icon="@Icons.Material.Filled.Search"></MudTextField>
 
         <div style="display: flex">
             <MudButton Class="mb-5" Variant="Variant.Filled" Color="Color.Primary" OnClick="() => GetOrdersByCustomerId()">Search</MudButton>
@@ -130,7 +130,7 @@ else
 
                         <MudDivider Class="my-4" />
 
-                        <MudText Typo="Typo.h6" Class="mt-3"><strong>Total amount:</strong> @customerOrder.OrderItems.Sum(i => i.TotalPrice).ToString("0.00") kr</MudText>
+                        <MudText Typo="Typo.h6" Class="mt-3"><strong>Total price:</strong> @customerOrder.OrderItems.Sum(i => i.TotalPrice).ToString("0.00") kr</MudText>
                     </MudExpansionPanel>
                 }
             </MudExpansionPanels>
@@ -145,7 +145,8 @@ else
     private bool _showAllOrders = false;
     private bool _showCustomerOrder = false;
 
-    private string? _searchCustomerId;
+    private int _customerId;
+    private string? _searchCustomer;
     private string? _errorMessage;
     private string? _successMessage;
 
@@ -178,53 +179,57 @@ else
     {
         _errorMessage = null;
         _successMessage = null;
+        _customer = new CustomerDto();
         _customerOrders.Clear();
 
         try
         {
-            if (string.IsNullOrWhiteSpace(_searchCustomerId))
+            if (string.IsNullOrWhiteSpace(_searchCustomer))
             {
-                await LoadOrders();
                 _showCustomerOrder = false;
+                await LoadOrders();
+                return;
             }
-            else
-            {   
-                int customerId = Convert.ToInt32(_searchCustomerId);
 
-                var customer = await _httpClient.GetAsync($"api/customers/{customerId}");
+            if (!int.TryParse(_searchCustomer, out _customerId))
+            {
+                _errorMessage = "Customer ID must contain only numbers.";                    
+                return;                
+            }
+                          
+            var customer = await _httpClient.GetAsync($"api/customers/{_customerId}");
 
-                if (customer.IsSuccessStatusCode)
+            if (customer.IsSuccessStatusCode)
+            {
+                _customer = await customer.Content.ReadFromJsonAsync<CustomerDto>();
+
+                _showAllOrders = false;
+                _showCustomerOrder = true;
+            }
+            else if (customer.StatusCode == HttpStatusCode.NotFound)
+            {
+                _errorMessage = "No customer found with given customer ID.";
+
+                _showCustomerOrder = false;
+                return;
+            }
+
+            var response = await _httpClient.GetAsync($"api/orders/customer/{_customerId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var orders = await response.Content.ReadFromJsonAsync<List<OrderDto>>();
+
+                if (orders != null)
                 {
-                    _customer = await customer.Content.ReadFromJsonAsync<CustomerDto>();
-
-                    _showAllOrders = false;
-                    _showCustomerOrder = true;
-                }
-                else if (customer.StatusCode == HttpStatusCode.NotFound)
-                {
-                    _errorMessage = "No customer found with given customer ID.";
-
-                    _showCustomerOrder = false;
-                    return;
+                    _customerOrders.AddRange(orders);
                 }
 
-                var response = await _httpClient.GetAsync($"api/orders/customer/{customerId}");
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var orders = await response.Content.ReadFromJsonAsync<List<OrderDto>>();
-
-                    if (orders != null)
-                    {
-                        _customerOrders.AddRange(orders);
-                    }
-
-                    _successMessage = $"Found {orders.Count} order(s) for customer below";
-                }
-                else if (response.StatusCode == HttpStatusCode.NotFound)
-                {
-                    _errorMessage = "No orders found for selected customer.";
-                }
+                _successMessage = $"Found {orders.Count} order(s) for customer below";
+            }
+            else if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                _errorMessage = "No orders found for selected customer.";
             }
         }
         catch (Exception ex)
@@ -237,7 +242,7 @@ else
 
     private async Task ClearOrderSearch()
     {
-        _searchCustomerId = string.Empty;
+        _searchCustomer = string.Empty;
         _errorMessage = null;
         _successMessage = null;
 

@@ -22,10 +22,10 @@ else
 {
     @if (_showProducts)
     {
-        <MudPaper Class="pa-4">
+        <MudPaper Class="pa-4 mb-5">
             <MudText Class="mb-5" Typo="Typo.h4">Product Management</MudText>
 
-            <MudTextField Class="mb-5" @bind-Value="_searchId" Label="Search by product ID" Adornment="Adornment.Start" Icon="@Icons.Material.Filled.Search"></MudTextField>
+            <MudTextField Class="mb-5" @bind-Value="_searchProduct" Label="Search by product ID" Adornment="Adornment.Start" Icon="@Icons.Material.Filled.Search"></MudTextField>
 
             <div style="display: flex">
                 <MudButton Class="mb-5" Variant="Variant.Filled" Color="Color.Primary" OnClick="() => GetProductById()">Search</MudButton>
@@ -65,6 +65,11 @@ else
                         <MudTd DataLabel="Stock Quantity">@context.StockQuantity</MudTd>
                         <MudTd DataLabel="Category">@context.ProductCategoryName</MudTd>
                         <MudTd DataLabel="Is discontinued">@context.IsDiscontinued</MudTd>
+                        <MudTd>
+                            <MudButton OnClick="() => PrepareAddToCart(context)" Color="Color.Tertiary">
+                                <MudIcon Icon="@Icons.Material.Filled.AddShoppingCart" />
+                            </MudButton>
+                        </MudTd>
                         <MudTd>
                             <MudButton OnClick="() => PrepareToUpdateProduct(context)" Color="Color.Tertiary">
                                 <MudIcon Icon="@Icons.Material.Outlined.Settings" />
@@ -175,6 +180,48 @@ else
             <MudButton Class="mb-3 ml-2" Variant="Variant.Outlined" Color="Color.Primary" OnClick="CancelDeleteProduct">No</MudButton>
         </MudPaper>
     }
+
+    @if (_cartItems.Any())
+    {                   
+        <MudPaper Class="pa-4">
+            <MudText Class="mb-5" Typo="Typo.h6">Shopping Cart</MudText>
+
+            <MudDivider Class="mb-5" />
+
+            <MudSelect @bind-Value="_newOrderCustomerId" Label="Select a customer" Required="true" Class="mb-3">
+                @foreach (var customer in _customers)
+                {
+                    <MudSelectItem Value="@customer.Id">@($"{customer.FirstName} {customer.LastName}")</MudSelectItem>
+                }
+            </MudSelect>
+
+            <MudText Typo="Typo.body1">Cart items</MudText>
+
+            <MudDivider Class="mb-5" />
+
+            @foreach (var item in _cartItems)
+            {
+                <MudCard Class="pa-4 mb-4">
+                    <MudText Typo="Typo.body2"><strong>Product ID:</strong> @item.ProductId</MudText>
+                    <div style="display: flex; align-items:center;">
+                        <MudText Typo="Typo.body2"><strong>Quantity:</strong></MudText>
+
+                        <MudNumericField @bind-Value="item.Quantity" Min="1" Step="1" Immediate="true" Class="ml-3" Style="width: 200px" />
+
+                        <MudButton OnClick="() => RemoveFromCart(item.ProductId)" Color="Color.Tertiary">
+                            <MudIcon Icon="@Icons.Material.Filled.Delete" />
+                        </MudButton>
+                    </div>
+                </MudCard>                                          
+            }
+
+            <MudDivider Class="mb-5" />
+
+            <MudText Class="mb-5">Total price: @CalculateTotalPrice() kr</MudText>
+
+            <MudButton OnClick="() => Checkout()" Variant="Variant.Filled" Color="Color.Primary">Proceed to Checkout</MudButton>
+        </MudPaper>        
+    }
 }
 
 @code {
@@ -191,21 +238,30 @@ else
     private bool _showAddProduct = false;
     private bool _showDeleteProduct = false;
 
-    private string? _searchId;
+    private int _productId;
+    private int? _productIdToDelete;
+    private int _newOrderCustomerId;
+
+    private string? _searchProduct;
     private string? _errorMessage;
     private string? _successMessage;
+
+    private List<CustomerDto> _customers = new List<CustomerDto>();
 
     private List<ProductCategoriesDto> _productCategories = new List<ProductCategoriesDto>();
     private List<ProductDto> _products = new List<ProductDto>();
     private ProductDto _productToAdd = new ProductDto();
     private ProductDto? _productToUpdate;
-    private int? _productIdToDelete;
+
+    private CreateOrderDto _newOrder = new CreateOrderDto();
+    private List<CreateOrderItemDto> _cartItems = new List<CreateOrderItemDto>();
 
 
     protected override async Task OnInitializedAsync()
     {
         await LoadCategories();
         await LoadProducts();
+        await LoadCustomers();
     }
 
     private async Task LoadCategories()
@@ -243,31 +299,36 @@ else
 
         try
         {
-            if (string.IsNullOrWhiteSpace(_searchId))
+            if (string.IsNullOrWhiteSpace(_searchProduct))
             {
                 await LoadProducts();
+                return;
             }
-            else
+
+            if (!int.TryParse(_searchProduct, out _productId))
             {
-                var response = await _httpClient.GetAsync($"api/products/{_searchId}");
+                _errorMessage = "Product ID must contain only numbers.";
+                return;
+            }
 
-                if (response.IsSuccessStatusCode)
-                {
-                    var product = await response.Content.ReadFromJsonAsync<ProductDto>();
+            var response = await _httpClient.GetAsync($"api/products/{_productId}");
 
-                    if (product != null)
-                    {
-                        _products.Add(product);
-                    }
-                }
-                else if (response.StatusCode == HttpStatusCode.NotFound)
+            if (response.IsSuccessStatusCode)
+            {
+                var product = await response.Content.ReadFromJsonAsync<ProductDto>();
+
+                if (product != null)
                 {
-                    _errorMessage = "No product found with given product ID";
+                    _products.Add(product);
                 }
+            }
+            else if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                _errorMessage = "No product found with given product ID";
             }
         }
         catch (Exception ex)
-        {
+        {            
             _errorMessage = "An error occurred while searching for selected product.";
 
             Console.Error.WriteLine($"An error occurred: {ex.Message}");
@@ -276,7 +337,7 @@ else
 
     private async Task ClearProductSearch()
     {
-        _searchId = string.Empty;
+        _searchProduct = string.Empty;
         _errorMessage = null;
         _successMessage = null;
 
@@ -466,9 +527,116 @@ else
         _productIdToDelete = null;
         _errorMessage = "Delete product cancelled.";
         _successMessage = null;
-        
-        _showDeleteProduct = false;
-        _showProducts = true;
-    }
-}
 
+        _showDeleteProduct = false;
+
+        await LoadProducts();
+    }
+
+    private async Task LoadCustomers()
+    {
+        try
+        {
+            _customers = await _httpClient.GetFromJsonAsync<List<CustomerDto>>("api/customers");
+
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"An error occurred while fetching customers: {ex.Message}";
+        }        
+    }
+
+    private void PrepareAddToCart(ProductDto product)
+    {
+        var existingCartItem = _cartItems.FirstOrDefault(i => i.ProductId == product.Id);
+
+        if (existingCartItem != null)
+        {
+            existingCartItem.Quantity++;
+        }
+        else
+        {
+            var newCartItem = new CreateOrderItemDto
+            {
+                ProductId = product.Id,
+                Quantity = 1,
+            };
+
+            _cartItems.Add(newCartItem);           
+        }
+
+        _successMessage = "Product added to cart.";
+    }
+
+    private void RemoveFromCart(int productId)
+    {
+        var itemToRemove = _cartItems.FirstOrDefault(i => i.ProductId == productId);
+
+        if (_cartItems.Count == 0)
+        {
+            _errorMessage = "No products not found in cart";
+        }
+        else if (itemToRemove != null)
+        {
+            _cartItems.Remove(itemToRemove);
+            _successMessage = "Product removed from cart";
+        }
+        else
+        {
+            _errorMessage = "Product not found in cart";
+        }
+
+        StateHasChanged();
+    }
+
+    private decimal CalculateTotalPrice()
+    {
+        decimal totalPrice = 0;
+
+        foreach (var item in _cartItems)
+        {
+            var product = _products.FirstOrDefault(i => i.Id == item.ProductId);
+
+            if (product != null)
+            {
+                totalPrice += (product.Price * item.Quantity);
+            }
+        }
+
+        return totalPrice;
+    }
+
+    private async Task Checkout()
+    {
+        _newOrder.CustomerId = _newOrderCustomerId;
+        _newOrder.OrderDate = DateTime.Now;
+        _newOrder.OrderItems = _cartItems;       
+
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync("api/orders", _newOrder);
+
+            if (response.IsSuccessStatusCode)
+            {
+                _successMessage = "Successfully placed an order!";
+                _errorMessage = null;
+
+                _newOrder = new CreateOrderDto();
+                _cartItems = new List<CreateOrderItemDto>();
+            }
+            else
+            {
+                _errorMessage = "Failed to place order.";
+            }
+        }
+        catch (Exception ex)
+        {            
+            _errorMessage = $"An error occurred: {ex.Message}";
+
+            _newOrder = new CreateOrderDto();
+            _cartItems = new List<CreateOrderItemDto>();
+        }
+    }
+    
+
+}

@@ -29,7 +29,7 @@ else
                 <MudButton Class="mb-5" Variant="Variant.Outlined" Color="Color.Primary" OnClick="() => ClearEmailSearch()" style="margin-left: 10px;">Clear</MudButton>
                 <MudButton Class="mb-5" Variant="Variant.Filled" Color="Color.Secondary" OnClick="() => PrepareToAddCustomer()" style="margin-left: auto;">Add Customer</MudButton>
             </div>
-    
+
             @if (!string.IsNullOrEmpty(_errorMessage))
             {
                 <MudText Class="mb-5" Typo="Typo.body1" Style="@($"color:{Colors.Red.Accent4};")">@_errorMessage</MudText>
@@ -67,13 +67,13 @@ else
                     </RowTemplate>
                     <PagerContent>
                         <MudTablePager PageSizeOptions="new int[] { 5, 10, 25, 50, 100, int.MaxValue }"
-                                       RowsPerPageString="@rowsPerPageString"
-                                       InfoFormat="@infoFormat"
-                                       AllItemsText="@allItemsText"
-                                       HorizontalAlignment="@horizontalAlignment"
-                                       HideRowsPerPage="@hideRowsPerPage"
-                                       HidePageNumber="@hidePageNumber"
-                                       HidePagination="@hidePagination" />
+                        RowsPerPageString="@rowsPerPageString"
+                        InfoFormat="@infoFormat"
+                        AllItemsText="@allItemsText"
+                        HorizontalAlignment="@horizontalAlignment"
+                        HideRowsPerPage="@hideRowsPerPage"
+                        HidePageNumber="@hidePageNumber"
+                        HidePagination="@hidePagination" />
                     </PagerContent>
                 </MudTable>
             }
@@ -186,6 +186,7 @@ else
             if (string.IsNullOrWhiteSpace(_emailSearch))
             {
                 await LoadCustomers();
+                return;
             }
             else
             {
