@@ -32,7 +32,7 @@ public class ProductsController : ControllerBase
 
         if (product is null) 
         {
-            return NotFound($"No product found with given ID: {id}, please try again.");
+            return NotFound($"No product found with given ID: {id}.");
         }
 
         return Ok(product);
@@ -46,7 +46,7 @@ public class ProductsController : ControllerBase
 
         if (product is null)
         {
-            return NotFound($"No product found with given productname: {name}, please try again.");
+            return NotFound($"No product found with given productname: {name}.");
         }
 
         return Ok(product);
@@ -70,7 +70,7 @@ public class ProductsController : ControllerBase
 
         if (product is null)
         {
-            return Conflict("Cannot add product: An identical product is already registered.");
+            return Conflict("Cannot add product: An product with identical productnumber is already registered.");
         }
 
         return CreatedAtAction(nameof(GetProductById), new { id = product.Id }, product);
@@ -94,7 +94,7 @@ public class ProductsController : ControllerBase
 
         if (product is null)
         {
-            return NotFound($"No product found with given ID: {id}, please try again.");
+            return NotFound($"No product found with given ID: {id}.");
         }
 
         return Ok(product); 
@@ -108,7 +108,7 @@ public class ProductsController : ControllerBase
 
         if (!result)
         {
-            return NotFound($"No product found with given ID: {id}, please try again.");
+            return NotFound($"No product found with given ID: {id}.");
         }
 
         return NoContent();

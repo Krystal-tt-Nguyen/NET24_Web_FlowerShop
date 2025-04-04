@@ -35,7 +35,7 @@ public class OrdersController : ControllerBase
         var order = await _orderService.GetByOrderIdAsync(id);
 
         return order is null 
-            ? NotFound($"No order found with given ID: {id}, please try again.") 
+            ? NotFound($"No order found with given ID: {id}.") 
             : Ok(order);
     }
 

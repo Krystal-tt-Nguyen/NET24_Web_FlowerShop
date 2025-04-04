@@ -31,7 +31,7 @@ public class CustomersController : ControllerBase
 
         if (customer is null)
         {
-            return NotFound($"No customer found with given ID: {id}, please try again.");
+            return NotFound($"No customer found with given ID: {id}.");
         }
 
         return Ok(customer);
@@ -44,7 +44,7 @@ public class CustomersController : ControllerBase
 
         if (customer is null)
         {
-            return NotFound($"No customer found with given email address: {email}, please try again.");
+            return NotFound($"No customer found with given email address: {email}.");
         }
 
         return Ok(customer);
@@ -93,7 +93,7 @@ public class CustomersController : ControllerBase
 
         if (customer is null)
         {
-            return NotFound($"No customer found with given ID: {id}, please try again.");
+            return NotFound($"No customer found with given ID: {id}.");
         }
 
         return Ok(customer);                
