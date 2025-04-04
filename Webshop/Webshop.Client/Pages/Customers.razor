@@ -18,66 +18,64 @@
 else
 {
     @if (_showCustomers)
-    {
-        <MudPaper Class="pa-4">
-            <MudText Class="mb-5" Typo="Typo.h4">Customer Management</MudText>
+    {        
+        <MudText Class="mb-5" Typo="Typo.h4">Customer Management</MudText>
 
-            <MudTextField Class="mb-5" @bind-Value="_emailSearch" Label="Search by email" Adornment="Adornment.Start" Icon="@Icons.Material.Filled.Search"></MudTextField>
+        <MudTextField Class="mb-5" @bind-Value="_emailSearch" Label="Search by email" Adornment="Adornment.Start" Icon="@Icons.Material.Filled.Search"></MudTextField>
 
-            <div style="display: flex">
-                <MudButton Class="mb-5" Variant="Variant.Filled" Color="Color.Primary" OnClick="() => GetCustomerByEmail()">Search</MudButton>
-                <MudButton Class="mb-5" Variant="Variant.Outlined" Color="Color.Primary" OnClick="() => ClearEmailSearch()" style="margin-left: 10px;">Clear</MudButton>
-                <MudButton Class="mb-5" Variant="Variant.Filled" Color="Color.Secondary" OnClick="() => PrepareToAddCustomer()" style="margin-left: auto;">Add Customer</MudButton>
-            </div>
+        <div style="display: flex">
+            <MudButton Class="mb-5" Variant="Variant.Filled" Color="Color.Primary" OnClick="() => GetCustomerByEmail()">Search</MudButton>
+            <MudButton Class="mb-5" Variant="Variant.Outlined" Color="Color.Primary" OnClick="() => ClearEmailSearch()" style="margin-left: 10px;">Clear</MudButton>
+            <MudButton Class="mb-5" Variant="Variant.Filled" Color="Color.Secondary" OnClick="() => PrepareToAddCustomer()" style="margin-left: auto;">Add Customer</MudButton>
+        </div>
 
-            @if (!string.IsNullOrEmpty(_errorMessage))
-            {
-                <MudText Class="mb-5" Typo="Typo.body1" Style="@($"color:{Colors.Red.Accent4};")">@_errorMessage</MudText>
-            }
-            else if (!string.IsNullOrEmpty(_successMessage))
-            {
-                <MudText Class="mb-5" Typo="Typo.body1" Style="@($"color:{Colors.Green.Accent4};")">@_successMessage</MudText>
-            }
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <MudText Class="mb-5" Typo="Typo.body1" Style="@($"color:{Colors.Red.Accent4};")">@_errorMessage</MudText>
+        }
+        else if (!string.IsNullOrEmpty(_successMessage))
+        {
+            <MudText Class="mb-5" Typo="Typo.body1" Style="@($"color:{Colors.Green.Accent4};")">@_successMessage</MudText>
+        }
 
-            @if (_customers != null && _customers.Any())
-            {
-                <MudTable Items="@_customers" Hover="true" Class="mb-5">
-                    <ToolBarContent>
-                        <MudText Typo="Typo.h6">All products</MudText>
-                    </ToolBarContent>
-                    <HeaderContent>
-                        <MudTh>ID</MudTh>
-                        <MudTh>First Name</MudTh>
-                        <MudTh>Last Name</MudTh>
-                        <MudTh>Email</MudTh>
-                        <MudTh>Phone Number</MudTh>
-                        <MudTh>Street Address</MudTh>
-                        <MudTh>Actions</MudTh>
-                    </HeaderContent>
-                    <RowTemplate>
-                        <MudTd>@context.Id</MudTd>
-                        <MudTd>@context.FirstName</MudTd>
-                        <MudTd>@context.LastName</MudTd>
-                        <MudTd>@context.Email</MudTd>
-                        <MudTd>@context.PhoneNumber</MudTd>
-                        <MudTd>@context.StreetAddress</MudTd>
-                        <MudTd>
-                            <MudButton OnClick="() => PrepareToUpdateCustomer(context)" Variant="Variant.Outlined" Color="Color.Tertiary">Edit</MudButton>
-                        </MudTd>
-                    </RowTemplate>
-                    <PagerContent>
-                        <MudTablePager PageSizeOptions="new int[] { 5, 10, 25, 50, 100, int.MaxValue }"
-                        RowsPerPageString="@rowsPerPageString"
-                        InfoFormat="@infoFormat"
-                        AllItemsText="@allItemsText"
-                        HorizontalAlignment="@horizontalAlignment"
-                        HideRowsPerPage="@hideRowsPerPage"
-                        HidePageNumber="@hidePageNumber"
-                        HidePagination="@hidePagination" />
-                    </PagerContent>
-                </MudTable>
-            }
-        </MudPaper>
+        @if (_customers != null && _customers.Any())
+        {
+            <MudTable Items="@_customers" Hover="true" Class="mb-5">
+                <ToolBarContent>
+                    <MudText Typo="Typo.h6">All products</MudText>
+                </ToolBarContent>
+                <HeaderContent>
+                    <MudTh>ID</MudTh>
+                    <MudTh>First Name</MudTh>
+                    <MudTh>Last Name</MudTh>
+                    <MudTh>Email</MudTh>
+                    <MudTh>Phone Number</MudTh>
+                    <MudTh>Street Address</MudTh>
+                    <MudTh>Actions</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@context.Id</MudTd>
+                    <MudTd>@context.FirstName</MudTd>
+                    <MudTd>@context.LastName</MudTd>
+                    <MudTd>@context.Email</MudTd>
+                    <MudTd>@context.PhoneNumber</MudTd>
+                    <MudTd>@context.StreetAddress</MudTd>
+                    <MudTd>
+                        <MudButton OnClick="() => PrepareToUpdateCustomer(context)" Variant="Variant.Outlined" Color="Color.Tertiary">Edit</MudButton>
+                    </MudTd>
+                </RowTemplate>
+                <PagerContent>
+                    <MudTablePager PageSizeOptions="new int[] { 5, 10, 25, 50, 100, int.MaxValue }"
+                    RowsPerPageString="@rowsPerPageString"
+                    InfoFormat="@infoFormat"
+                    AllItemsText="@allItemsText"
+                    HorizontalAlignment="@horizontalAlignment"
+                    HideRowsPerPage="@hideRowsPerPage"
+                    HidePageNumber="@hidePageNumber"
+                    HidePagination="@hidePagination" />
+                </PagerContent>
+            </MudTable>
+        }
     }
 
     @if (_customerToUpdate != null)
@@ -102,7 +100,7 @@ else
             <MudTextField @bind-Value="_customerToUpdate.StreetAddress" Label="Street Address" Required="true" Class="mb-3"></MudTextField>
 
             <MudButton Class="mb-3" Variant="Variant.Filled" Color="Color.Primary" OnClick="() => UpdateCustomer()">Save</MudButton>
-            <MudButton Class="mb-3 ml-2" Variant="Variant.Outlined" Color="Color.Secondary" OnClick="CancelUpdateCustomer">Cancel</MudButton>
+            <MudButton Class="mb-3 ml-2" Variant="Variant.Filled" Color="Color.Default" OnClick="CancelUpdateCustomer">Cancel</MudButton>
         </MudPaper>
     }
 
@@ -127,7 +125,7 @@ else
             <MudTextField @bind-Value="_customerToAdd.StreetAddress" Label="Street Address" Required="true" Class="mb-3"></MudTextField>
 
             <MudButton Class="mt-3 mb-3" Variant="Variant.Filled" Color="Color.Primary" OnClick="() => AddCustomer()">Add</MudButton>
-            <MudButton Class="mt-3 mb-3 ml-2" Variant="Variant.Outlined" Color="Color.Secondary" OnClick="CancelAddCustomer">Cancel</MudButton>
+            <MudButton Class="mt-3 mb-3 ml-2" Variant="Variant.Filled" Color="Color.Default" OnClick="CancelAddCustomer">Cancel</MudButton>
         </MudPaper>
     }
 }
@@ -266,7 +264,7 @@ else
             }
             else
             {
-                _errorMessage = "Failed to add customer.";
+                _errorMessage = "Failed to add customer: email address must be unique. Please check email and try again.";
             }
         }
         catch (Exception ex)
@@ -278,7 +276,6 @@ else
 
     private async Task CancelAddCustomer()
     {
-        // _customerToAdd = null => "Object reference not set to an instance of an object"
         _customerToAdd = new CustomerDto();
         _errorMessage = "Add new customer cancelled.";
         _successMessage = null;
@@ -291,7 +288,6 @@ else
 
     private void PrepareToUpdateCustomer(CustomerDto customer)
     {
-        // Client visar en CustomerDto, behöver kopieras till en CustomerUpdateDto innan den skickas till API:et
         _customerToUpdate = new CustomerDto
         {
             Id = customer.Id,

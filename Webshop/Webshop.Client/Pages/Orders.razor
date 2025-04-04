@@ -76,8 +76,8 @@ else
                                     <MudCard Class="pa-3 mb-3">
                                         <MudText Typo="Typo.body2"><strong>Product name</strong>: @item.ProductName</MudText>
                                         <MudText Typo="Typo.body2"><strong>Quantity:</strong> @item.Quantity</MudText>
-                                        <MudText Typo="Typo.body2"><strong>Unit price:</strong> @item.UnitPrice.ToString("0.00")</MudText>
-                                        <MudText Typo="Typo.body2"><strong>Sub total:</strong> @item.TotalPrice.ToString("0.00")</MudText>
+                                        <MudText Typo="Typo.body2"><strong>Unit price:</strong> @item.UnitPrice.ToString("0.00") kr</MudText>
+                                        <MudText Typo="Typo.body2"><strong>Sub total:</strong> @item.TotalPrice.ToString("0.00") kr</MudText>
                                     </MudCard>
                                 }
                             </div>
@@ -100,14 +100,14 @@ else
                 <MudText Typo="Typo.body2"><strong>Customer name:</strong> @_customer.FirstName @_customer.LastName</MudText>
                 <MudText Typo="Typo.body2"><strong>Address:</strong> @_customer.StreetAddress</MudText>
                 <MudText Typo="Typo.body2"><strong>Phone number:</strong> @_customer.PhoneNumber</MudText>
-            </MudCard>            
+            </MudCard>                        
 
             <MudExpansionPanels MultiExpansion="true">
                 @foreach (var customerOrder in _customerOrders)
                 {
                     <MudExpansionPanel Text="@($"Order ID: {customerOrder.Id.ToString()}")">                       
                         <div>
-                            <MudText Typo="Typo.body1" Class="mb-3">Order information</MudText>
+                            <MudText Typo="Typo.body1" Class="mb-3">Order Information</MudText>
                             <MudText Typo="Typo.body2"><strong>Order ID:</strong> @customerOrder.Id</MudText>
                             <MudText Typo="Typo.body2"><strong>Order Date:</strong> @customerOrder.OrderDate.ToString("yy-MM-dd")</MudText>
                             <MudText Typo="Typo.body2"><strong>Order Status:</strong> @customerOrder.OrderStatus</MudText>
