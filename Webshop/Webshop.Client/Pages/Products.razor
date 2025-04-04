@@ -66,7 +66,7 @@ else
                         <MudTd DataLabel="Category">@context.ProductCategoryName</MudTd>
                         <MudTd DataLabel="Is discontinued">@context.IsDiscontinued</MudTd>
                         <MudTd>
-                            <MudButton OnClick="() => PrepareAddToCart(context)" Color="Color.Tertiary">
+                            <MudButton OnClick="() => PrepareAddToCart(context)" Disabled=@context.IsDiscontinued Color="Color.Tertiary">
                                 <MudIcon Icon="@Icons.Material.Filled.AddShoppingCart" />
                             </MudButton>
                         </MudTd>
@@ -186,9 +186,7 @@ else
         <MudPaper Class="pa-4">
             <MudText Class="mb-5" Typo="Typo.h6">Shopping Cart</MudText>
 
-            <MudDivider Class="mb-5" />
-
-            <MudSelect @bind-Value="_newOrderCustomerId" Label="Select a customer" Required="true" Class="mb-3">
+            <MudSelect @bind-Value="_newOrderCustomerId" Label="Select a customer" Required="true" Class="mb-5">
                 @foreach (var customer in _customers)
                 {
                     <MudSelectItem Value="@customer.Id">@($"{customer.FirstName} {customer.LastName}")</MudSelectItem>
@@ -202,10 +200,11 @@ else
             @foreach (var item in _cartItems)
             {
                 <MudCard Class="pa-4 mb-4">
-                    <MudText Typo="Typo.body2"><strong>Product ID:</strong> @item.ProductId</MudText>
+                    <MudText Typo="Typo.body2"><strong>Product name:</strong> @GetCartItemProductName()</MudText>
+                    <MudText Typo="Typo.body2"><strong>Product unit price:</strong> @GetCartItemUnitPrice()</MudText>
+
                     <div style="display: flex; align-items:center;">
                         <MudText Typo="Typo.body2"><strong>Quantity:</strong></MudText>
-
                         <MudNumericField @bind-Value="item.Quantity" Min="1" Step="1" Immediate="true" Class="ml-3" Style="width: 200px" />
 
                         <MudButton OnClick="() => RemoveFromCart(item.ProductId)" Color="Color.Tertiary">
@@ -239,7 +238,7 @@ else
     private bool _showDeleteProduct = false;
 
     private int _productId;
-    private int? _productIdToDelete;
+    private int _productIdToDelete;
     private int _newOrderCustomerId;
 
     private string? _searchProduct;
@@ -273,6 +272,19 @@ else
         catch (Exception ex)
         {
             _errorMessage = $"An error occurred while fetching categories: {ex.Message}";
+        }
+    }
+
+    private async Task LoadCustomers()
+    {
+        try
+        {
+            _customers = await _httpClient.GetFromJsonAsync<List<CustomerDto>>("api/customers");
+
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"An error occurred while fetching customers: {ex.Message}";
         }
     }
 
@@ -494,56 +506,93 @@ else
         _productIdToDelete = id;
     }
 
+    private async Task<bool> IsProductInAnyOrder(int productId)
+    {
+        var existingOrders = await _httpClient.GetFromJsonAsync<List<OrderDto>>($"api/orders");
+
+        foreach (var order in existingOrders)
+        {
+            if (order.OrderItems.Any(o => o.ProductId == productId))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private async Task DeleteProduct()
     {
-        try
+        var existingOrderItem = await IsProductInAnyOrder(_productIdToDelete);
+
+        if (existingOrderItem)
         {
-            var response = await _httpClient.DeleteAsync($"api/products/{_productIdToDelete}");
+            var product = await _httpClient.GetFromJsonAsync<ProductDto>($"api/products/{_productIdToDelete}");
+
+            var productToUpdate = new UpdateProductDto
+            {
+                ProductNumber = product.ProductNumber,
+                ProductName = product.ProductName,
+                Description = product.Description,
+                Price = product.Price,
+                StockQuantity = product.StockQuantity,
+                ProductCategoryId = product.ProductCategoryId,
+                IsDiscontinued = true
+            };
+
+            var response = await _httpClient.PutAsJsonAsync($"api/products/{_productIdToDelete}", productToUpdate);
 
             if (response.IsSuccessStatusCode)
             {
-                _successMessage = "Product deleted successfully.";
+                _successMessage = "Cannot delete product as it is found in a pending order. Product is now marked as Discontinued instead.";
                 _errorMessage = null;
                 _productToUpdate = null;
-
                 _showDeleteProduct = false;
 
                 await LoadProducts();
             }
             else
             {
-                _errorMessage = "Failed to delete product.";
-                _productIdToDelete = null;
+                _errorMessage = "Failed to delete product as it is found in a pending order.";
             }
         }
-        catch (Exception ex)
+        else
         {
-            _errorMessage = $"An error occurred: {ex.Message}";
+            try
+            {
+                var response = await _httpClient.DeleteAsync($"api/products/{_productIdToDelete}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    _successMessage = "Product deleted successfully.";
+                    _errorMessage = null;
+                    _productToUpdate = null;
+
+                    _showDeleteProduct = false;
+
+                    await LoadProducts();
+                }
+                else
+                {
+                    _errorMessage = "Failed to delete product.";
+                    _productIdToDelete = 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                _errorMessage = $"An error occurred: {ex.Message}";
+            }     
         }
     }
 
     private async Task CancelDeleteProduct()
     {
-        _productIdToDelete = null;
+        _productIdToDelete = 0;
         _errorMessage = "Delete product cancelled.";
         _successMessage = null;
 
         _showDeleteProduct = false;
 
         await LoadProducts();
-    }
-
-    private async Task LoadCustomers()
-    {
-        try
-        {
-            _customers = await _httpClient.GetFromJsonAsync<List<CustomerDto>>("api/customers");
-
-        }
-        catch (Exception ex)
-        {
-            _errorMessage = $"An error occurred while fetching customers: {ex.Message}";
-        }        
     }
 
     private void PrepareAddToCart(ProductDto product)
@@ -589,23 +638,6 @@ else
         StateHasChanged();
     }
 
-    private decimal CalculateTotalPrice()
-    {
-        decimal totalPrice = 0;
-
-        foreach (var item in _cartItems)
-        {
-            var product = _products.FirstOrDefault(i => i.Id == item.ProductId);
-
-            if (product != null)
-            {
-                totalPrice += (product.Price * item.Quantity);
-            }
-        }
-
-        return totalPrice;
-    }
-
     private async Task Checkout()
     {
         _newOrder.CustomerId = _newOrderCustomerId;
@@ -637,6 +669,56 @@ else
             _cartItems = new List<CreateOrderItemDto>();
         }
     }
-    
+
+    private decimal CalculateTotalPrice()
+    {
+        decimal totalPrice = 0;
+
+        foreach (var item in _cartItems)
+        {
+            var product = _products.FirstOrDefault(i => i.Id == item.ProductId);
+
+            if (product != null)
+            {
+                totalPrice += (product.Price * item.Quantity);
+            }
+        }
+
+        return totalPrice;
+    }
+
+    private string GetCartItemProductName()
+    {
+        string cartItemProductName = string.Empty;
+
+        foreach (var item in _cartItems)
+        {
+            var product = _products.FirstOrDefault(p => p.Id == item.ProductId);
+
+            if (product != null)
+            {
+                cartItemProductName = product.ProductName;
+            }
+        }
+
+        return cartItemProductName;
+    }
+
+    private decimal GetCartItemUnitPrice()
+    {
+        decimal cartItemUnitPrice = 0;
+
+        foreach (var item in _cartItems)
+        {
+            var product = _products.FirstOrDefault(p => p.Id == item.ProductId);
+
+            if (product != null)
+            {
+                cartItemUnitPrice = product.Price;
+            }
+        }
+
+        return cartItemUnitPrice;
+    }
 
 }
