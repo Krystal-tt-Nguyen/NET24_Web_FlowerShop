@@ -78,7 +78,7 @@ GET /api/customers{1}
   - **404 Not Found**: Returned when the specified customer does not exist.
 
 #### Example Request:
-GET /api/customers{jane.doe@example.com}
+GET /api/customers/email/{jane.doe@example.com}
 
 #### Example Response:
 ```
@@ -594,7 +594,9 @@ Request body: application/json
 DELETE /api/products/{130}
 
 #### Example Request:
+```
 {
   "error": "esponse status is 404",
   "message": "No product found with given ID: 130."
 }
+```
